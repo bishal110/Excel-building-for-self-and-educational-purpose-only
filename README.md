@@ -25,7 +25,8 @@ intentional limitation is written down in [`KNOWN_LIMITS.md`](./KNOWN_LIMITS.md)
 | **Import / export** | CSV (RFC-4180) and `.xlsx` (via SheetJS); save/open a whole workbook as a `.aioffice` JSON file. |
 | **Charts** | Basic line / bar chart builder from a selected range. |
 | **Macros** | JavaScript, Office-Scripts style, with a documented `sheet` API — **never** VBA. See [`docs/MACRO_API.md`](./docs/MACRO_API.md). |
-| **Persistence** | Autosaves to the browser (localStorage) and restores on reload. |
+| **Documents** | Rich-text editor (TipTap) with a ribbon — styles/headings, font, bold/italic/underline, lists, alignment, insert table/image/link — a page-styled canvas, live word count, and **export to `.docx`** plus print-to-PDF. |
+| **Persistence** | Autosaves both the workbook and the document to the browser (localStorage) and restores on reload. |
 
 ---
 
@@ -70,8 +71,11 @@ npm run lint      # type-check with the TypeScript compiler
 npm run e2e       # end-to-end browser tests (Playwright)
 ```
 
-- **198 unit tests** cover the formula engine, grid operations, CSV, and the app store.
-- **Playwright E2E** covers the core flow: edit → formula → insert row → undo → export.
+- **205 unit tests** cover the formula engine, grid operations, CSV, the document
+  model, and the app store.
+- **Playwright E2E (7 tests)** cover the Sheets flow (edit → formula → insert row →
+  undo → export, freeze, macros, help) and the Docs flow (type → format → insert
+  table → export `.docx`).
 
 > First-time E2E users may need browsers: `npm run e2e:install`.
 
@@ -86,16 +90,25 @@ src/
 │   ├── grid/               #   workbook, sheet, mutations, sort/fill/find
 │   ├── format/             #   number formatting (incl. ₹ Indian grouping)
 │   └── macro/              #   sandboxed JS macro runtime + sheet API
-├── io/                     # CSV, XLSX, and .aioffice project serialization
+├── io/                     # CSV, XLSX, .docx, and .aioffice serialization
 └── ui/                     # React application
-    ├── state/              #   store (undo/redo, selection, clipboard, autosave)
-    └── components/         #   Grid, Toolbar, FormulaBar, tabs, modals
+    ├── state/              #   spreadsheet store (undo/redo, selection, autosave)
+    ├── components/         #   Grid, Toolbar, FormulaBar, tabs, modals
+    ├── sheets/             #   Sheets workspace (keyboard, wiring)
+    └── docs/               #   Docs editor (TipTap) + ribbon
 e2e/                        # Playwright end-to-end tests
 docs/                       # Architecture plan and macro API reference
 ```
 
 The **engine is deliberately independent of React** — it is pure TypeScript,
 fully unit-tested, and could be reused outside this app.
+
+**Why TipTap for the document editor?** The editor is built on
+[TipTap](https://tiptap.dev/) (a maintained wrapper over ProseMirror) rather than
+the deprecated `document.execCommand`. TipTap gives a structured, well-tested
+document model (clean JSON we convert to `.docx`), predictable cross-browser
+behaviour, and first-class extensions for tables, links, and images — none of
+which `execCommand` reliably provides.
 
 ---
 
@@ -120,8 +133,8 @@ This project is being built in phases:
 
 - ✅ **Phase 0** — Architecture & plan ([`docs/PHASE0_PLAN.md`](./docs/PHASE0_PLAN.md))
 - ✅ **Phase 1** — Spreadsheet engine (formula / grid / macro)
-- ✅ **Phase 2** — Sheets UI (this release)
-- ⬜ **Phase 3** — Document editor
+- ✅ **Phase 2** — Sheets UI
+- ✅ **Phase 3** — Document editor (this release)
 - ⬜ **Phase 4** — Presentation editor
 - ⬜ **Phase 5** — App shell, in-app help, persistence
 - ⬜ **Phase 6** — Packaging (single-file HTML, PWA, desktop)

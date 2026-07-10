@@ -36,6 +36,17 @@ body { color: var(--text); background: var(--bg); font-size: 13px; }
 }
 .brand { font-weight: 700; letter-spacing: 0.3px; }
 .brand-sub { font-weight: 400; opacity: 0.85; margin-left: 4px; }
+.module-nav { display: flex; gap: 4px; margin-left: 20px; }
+.module-nav button {
+  border: none;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  padding: 4px 14px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 13px;
+}
+.module-nav button.active { background: #fff; color: var(--accent); font-weight: 600; }
 
 /* Toolbar */
 .toolbar {
@@ -257,4 +268,46 @@ body { color: var(--text); background: var(--bg); font-size: 13px; }
 @media (max-width: 640px) {
   .help-grid { grid-template-columns: 1fr; }
   .tb-group { border-right: none; }
+  .doc-page { width: 100%; padding: 24px; }
+}
+
+/* Docs module */
+.doc-scroll {
+  flex: 1;
+  overflow: auto;
+  background: #e9edf3;
+  padding: 24px 0;
+}
+.doc-page {
+  width: 794px; /* ~A4 at 96dpi */
+  min-height: 1000px;
+  margin: 0 auto;
+  background: #fff;
+  padding: 64px 72px;
+  box-shadow: 0 2px 14px rgba(15, 23, 42, 0.15);
+  border-radius: 2px;
+}
+.doc-loading { padding: 40px; color: var(--muted); }
+.doc-page .ProseMirror { outline: none; min-height: 800px; line-height: 1.6; }
+.doc-page .ProseMirror:focus { outline: none; }
+.doc-page h1 { font-size: 28px; margin: 0.4em 0; }
+.doc-page h2 { font-size: 22px; margin: 0.4em 0; }
+.doc-page h3 { font-size: 18px; margin: 0.4em 0; }
+.doc-page p { margin: 0.5em 0; }
+.doc-page ul, .doc-page ol { padding-left: 1.6em; margin: 0.5em 0; }
+.doc-page a { color: var(--accent); text-decoration: underline; }
+.doc-page img { max-width: 100%; height: auto; }
+.doc-page table { border-collapse: collapse; margin: 0.6em 0; width: 100%; }
+.doc-page table td, .doc-page table th {
+  border: 1px solid var(--border-strong);
+  padding: 4px 8px;
+  min-width: 40px;
+}
+.doc-page table th { background: var(--panel); font-weight: 600; }
+
+/* Print / PDF: show only the page, remove chrome */
+@media print {
+  .app-header, .toolbar, .status-bar, .sheet-tabs { display: none !important; }
+  .doc-scroll { overflow: visible; background: #fff; padding: 0; }
+  .doc-page { box-shadow: none; width: auto; margin: 0; padding: 0; }
 }

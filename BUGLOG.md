@@ -58,3 +58,30 @@ symptom, root cause, fix, and the test that guards it.
 - The environment ships Chromium build 1194 while the installed `@playwright/test`
   expects a newer build. Not a product bug: `playwright.config.ts` launches the
   on-disk Chromium directly via `executablePath`, so E2E runs without a download.
+
+### BUG-006 — Freeze button did nothing (found in self-audit)
+- **Symptom**: The Freeze toolbar button toggled `frozenRows`/`frozenCols` in the
+  store, but scrolling did not keep any row or column pinned.
+- **Root cause**: `Grid.tsx` never read `frozenRows`/`frozenCols`, so the state
+  had no rendering effect — a gap between the claimed feature and reality.
+- **Fix**: Reworked the grid to position cells/headers with explicit
+  scroll-offset math and pin frozen rows/columns (Excel-like). Frozen rows are
+  always rendered even when scrolled out of the virtualization window.
+- **Test**: `e2e/sheets.spec.ts` → "freeze keeps the header row visible while
+  scrolling".
+
+## Phase 3 — Docs UI
+
+### BUG-007 — Missing `@tiptap/extension-image` broke the type-check/build
+- **Symptom**: `tsc` failed — `Cannot find module '@tiptap/extension-image'` and
+  `setImage` missing from the command chain.
+- **Root cause**: The image extension was used but not added to `package.json`.
+- **Fix**: Installed `@tiptap/extension-image`; the command types then register.
+- **Test**: Guarded by `npm run build` (tsc) and `e2e/docs.spec.ts`.
+
+### BUG-008 — Doc-model test failed strict index/undefined checks
+- **Symptom**: `tsc` errors: `blocks[1]` possibly undefined and union not narrowed.
+- **Root cause**: `noUncheckedIndexedAccess` makes array access possibly-undefined,
+  which blocked discriminated-union narrowing.
+- **Fix**: Asserted the indexed access (`blocks[1]!`) before narrowing on `kind`.
+- **Test**: `io/docModel.test.ts`.

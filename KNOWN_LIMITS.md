@@ -35,7 +35,6 @@ no feature parity is claimed. Items are moved here rather than silently dropped.
 
 ## Not started yet (planned by phase)
 
-- Docs editor and `.docx` export — Phase 3.
 - Slides editor and present mode — Phase 4.
 - Shell, help audit, autosave/persistence hardening — Phase 5.
 - Packaging (single-file HTML, PWA, Electron) — Phase 6.
@@ -60,3 +59,19 @@ no feature parity is claimed. Items are moved here rather than silently dropped.
   packaging task.
 - **Autosave is single-slot.** One workbook is autosaved to `localStorage`;
   there is no multi-document manager yet (Phase 5).
+
+## Docs UI (Phase 3) — current limitations
+
+- **`.docx` export is a subset.** Paragraphs, headings, bold/italic/underline,
+  alignment, bullet/numbered lists, and tables are exported. **Images, hyperlinks
+  as clickable links, font-family, and custom colors are not yet written to the
+  `.docx`** (they remain in the on-screen editor). No round-trip `.docx` import.
+- **Print-to-PDF uses the browser.** "Print / PDF" calls the browser's print
+  dialog with print CSS; there is no direct PDF file writer.
+- **Images are by URL only.** Inserting an image prompts for a URL; there is no
+  file upload/embed, and images are not embedded into the `.docx`.
+- **No pagination.** The page canvas is a single continuous A4-width sheet; it
+  does not paginate into discrete printed pages on screen.
+- **Bundle size grew.** Adding TipTap + `docx` pushes the production bundle to
+  ~1.4 MB (gzip ~445 kB). Code-splitting the Docs module and `.xlsx`/`.docx`
+  writers behind dynamic imports is a Phase-6 packaging task.

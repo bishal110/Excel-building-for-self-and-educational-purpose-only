@@ -1,8 +1,8 @@
 # AI_Office — Phase 0: Goal & Plan
 
-> Status: **Phase 0 done; Phase 1 (engine) and Phase 2 (Sheets UI) complete.**
+> Status: **Phases 0–3 complete** — plan, engine, Sheets UI, and Docs editor.
 > The engine lives at the repository root (`src/engine`), the app under
-> `src/ui`, with `BUGLOG.md` and `KNOWN_LIMITS.md`.
+> `src/ui` (`sheets/`, `docs/`), with `BUGLOG.md` and `KNOWN_LIMITS.md`.
 > No application code is written in *this* Phase-0 document; the plan below
 > stands as the reference architecture.
 >
