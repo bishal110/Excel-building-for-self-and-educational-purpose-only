@@ -153,3 +153,42 @@ test('AUDIT: every Docs control runs without a runtime error', async ({ page }) 
   // Word count reflects content.
   await expect(page.getByTestId('word-count')).toContainText('Words:');
 });
+
+test('AUDIT: every Slides control runs without a runtime error', async ({ page }) => {
+  const errors = trackErrors(page);
+  await page.getByTestId('nav-slides').click();
+  await expect(page.getByTestId('slide-canvas')).toBeVisible();
+
+  const clicks: Array<[string, () => Promise<unknown>]> = [
+    ['Edit title', () => page.getByTestId('field-title').fill('Audit slide')],
+    ['Edit body', () => page.getByTestId('field-body').fill('line 1\nline 2')],
+    ['Edit notes', () => page.getByTestId('field-notes').fill('presenter notes')],
+    ['Add slide', () => page.getByTestId('add-slide').click()],
+    ['Duplicate', () => page.getByText('Duplicate').click()],
+    ['Layout title', () => page.getByTestId('layout-select').selectOption('title')],
+    ['Layout image', () => page.getByTestId('layout-select').selectOption('image')],
+    ['Image URL', () => page.getByTestId('field-image').fill('https://example.com/x.png')],
+    ['Layout titleBody', () => page.getByTestId('layout-select').selectOption('titleBody')],
+    ['Theme dark', () => page.getByTestId('theme-select').selectOption('dark')],
+    ['Theme ocean', () => page.getByTestId('theme-select').selectOption('ocean')],
+    ['Theme sand', () => page.getByTestId('theme-select').selectOption('sand')],
+    ['Theme light', () => page.getByTestId('theme-select').selectOption('light')],
+    ['Reorder', () => page.getByTestId('thumb-1').dragTo(page.getByTestId('thumb-0'))],
+    ['Export PDF', () => page.getByText('Export PDF').click()],
+    ['Delete', () => page.getByTestId('delete-slide').click()],
+  ];
+
+  for (const [name, fn] of clicks) {
+    await fn();
+    await page.waitForTimeout(30);
+    expect(errors, `error after "${name}": ${errors.join(' | ')}`).toEqual([]);
+  }
+
+  // Present mode: enter, navigate, exit.
+  await page.getByTestId('present').click();
+  await expect(page.getByTestId('present-mode')).toBeVisible();
+  await page.keyboard.press('ArrowRight');
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('present-mode')).toBeHidden();
+  expect(errors, `present: ${errors.join(' | ')}`).toEqual([]);
+});

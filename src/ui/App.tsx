@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { SheetsWorkspace } from './sheets/SheetsWorkspace';
 import { DocsView } from './docs/DocsView';
+import { SlidesView } from './slides/SlidesView';
 
-type Module = 'sheets' | 'docs';
+type Module = 'sheets' | 'docs' | 'slides';
 
 export function App() {
   const [module, setModule] = useState<Module>('sheets');
@@ -26,9 +27,18 @@ export function App() {
           >
             Docs
           </button>
+          <button
+            className={module === 'slides' ? 'active' : ''}
+            data-testid="nav-slides"
+            onClick={() => setModule('slides')}
+          >
+            Slides
+          </button>
         </nav>
       </header>
-      {module === 'sheets' ? <SheetsWorkspace /> : <DocsView />}
+      {module === 'sheets' && <SheetsWorkspace />}
+      {module === 'docs' && <DocsView />}
+      {module === 'slides' && <SlidesView />}
     </div>
   );
 }

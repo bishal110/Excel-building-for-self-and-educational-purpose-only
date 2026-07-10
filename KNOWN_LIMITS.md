@@ -35,7 +35,6 @@ no feature parity is claimed. Items are moved here rather than silently dropped.
 
 ## Not started yet (planned by phase)
 
-- Slides editor and present mode — Phase 4.
 - Shell, help audit, autosave/persistence hardening — Phase 5.
 - Packaging (single-file HTML, PWA, Electron) — Phase 6.
 
@@ -75,3 +74,17 @@ no feature parity is claimed. Items are moved here rather than silently dropped.
 - **Bundle size grew.** Adding TipTap + `docx` pushes the production bundle to
   ~1.4 MB (gzip ~445 kB). Code-splitting the Docs module and `.xlsx`/`.docx`
   writers behind dynamic imports is a Phase-6 packaging task.
+
+## Slides UI (Phase 4) — current limitations
+
+- **Three layouts only** (Title, Title + Body, Image). No multi-column layouts,
+  shapes, or free-form positioning of elements.
+- **Text-only body.** The slide body is plain multi-line text (no inline rich
+  formatting, bullet styling, or per-run fonts/colors).
+- **Images are by URL.** Same as Docs — no file upload/embed.
+- **Deck export is PDF only** (via the browser print dialog with print CSS). No
+  `.pptx` export.
+- **Transitions/animations are not implemented** — present mode is a static
+  slide-to-slide advance.
+- **Speaker notes** are stored and editable but are not shown in a separate
+  presenter view during present mode.

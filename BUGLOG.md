@@ -105,3 +105,11 @@ Everything else audited (number formats, sort, insert/delete row & column,
 find & replace, freeze, charts, macros, sheet add/rename/delete, project
 save/load, copy/paste at grid edges, macro on empty sheet, circular refs after
 row delete, and every Docs ribbon control) passed with no runtime errors.
+
+## Phase 4 — Slides UI
+
+No product bugs found during the build. The slide deck store has 9 unit tests
+(add/duplicate/delete/reorder/navigate/theme), 3 E2E tests (create → reorder →
+present → exit, layout/theme, delete-keeps-one), and a click-through audit that
+exercises every slide control (layouts, themes, present, export, reorder) with
+zero uncaught runtime errors.
