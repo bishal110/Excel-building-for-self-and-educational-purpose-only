@@ -39,7 +39,8 @@ export function writeXlsx(rows: string[][], sheetName = 'Sheet1'): Blob {
       if (c > maxC) maxC = c;
       const addr = XLSX.utils.encode_cell({ r, c });
       if (raw.startsWith('=') && raw.length > 1) {
-        ws[addr] = { t: 'n', f: raw.slice(1) };
+        // A cached value (v) is required, otherwise SheetJS drops the formula.
+        ws[addr] = { t: 'n', f: raw.slice(1), v: 0 };
       } else if (raw !== '' && !Number.isNaN(Number(raw))) {
         ws[addr] = { t: 'n', v: Number(raw) };
       } else {

@@ -85,3 +85,23 @@ symptom, root cause, fix, and the test that guards it.
   which blocked discriminated-union narrowing.
 - **Fix**: Asserted the indexed access (`blocks[1]!`) before narrowing on `kind`.
 - **Test**: `io/docModel.test.ts`.
+
+## Audit (Phases 1–3, before Phase 4)
+
+Full pass over every toolbar/ribbon option, tab, and feature: 23 store audit
+tests, 7 edge-case safety tests, an `.xlsx` round-trip test, and two Playwright
+click-through audits that fail on any uncaught runtime error. One real bug found.
+
+### BUG-009 — `.xlsx` export silently dropped formulas
+- **Symptom**: Exporting to `.xlsx` and reading the file back returned empty cells
+  where formulas had been (e.g. `=B2*2` came back as `""`).
+- **Root cause**: `writeXlsx` wrote formula cells as `{ t:'n', f:'…' }` with no
+  cached value. SheetJS drops a formula cell that has no `v`.
+- **Fix**: Write formula cells as `{ t:'n', f:'…', v:0 }`; readers use `f` and
+  ignore the placeholder value.
+- **Test**: `io/xlsx.test.ts` → "xlsx round-trip preserves … formulas".
+
+Everything else audited (number formats, sort, insert/delete row & column,
+find & replace, freeze, charts, macros, sheet add/rename/delete, project
+save/load, copy/paste at grid edges, macro on empty sheet, circular refs after
+row delete, and every Docs ribbon control) passed with no runtime errors.

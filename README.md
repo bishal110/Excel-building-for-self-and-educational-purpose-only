@@ -71,11 +71,13 @@ npm run lint      # type-check with the TypeScript compiler
 npm run e2e       # end-to-end browser tests (Playwright)
 ```
 
-- **205 unit tests** cover the formula engine, grid operations, CSV, the document
-  model, and the app store.
-- **Playwright E2E (7 tests)** cover the Sheets flow (edit → formula → insert row →
-  undo → export, freeze, macros, help) and the Docs flow (type → format → insert
-  table → export `.docx`).
+- **237 unit tests** cover the formula engine, grid operations, CSV/XLSX, the
+  document model, and the app store (including a feature-by-feature audit and
+  safety edge cases).
+- **Playwright E2E (9 tests)** cover the Sheets flow (edit → formula → insert row →
+  undo → export, freeze, macros, help), the Docs flow (type → format → insert
+  table → export `.docx`), and two click-through **audits** that fail on any
+  uncaught runtime error across every toolbar/ribbon control.
 
 > First-time E2E users may need browsers: `npm run e2e:install`.
 
