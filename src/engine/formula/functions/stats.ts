@@ -7,7 +7,6 @@ import {
   collectValues,
   FuncDef,
   makeCriteria,
-  numArg,
 } from './helpers';
 
 export const statsFunctions: Record<string, FuncDef> = {

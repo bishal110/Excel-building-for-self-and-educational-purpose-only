@@ -32,3 +32,29 @@ symptom, root cause, fix, and the test that guards it.
 - **Fix**: Narrowed `blankAs()`'s return type to `number|string|boolean|null`
   (it never returns an error).
 - **Test**: Guarded by `npm run lint` (tsc) in CI; no runtime test needed.
+
+## Phase 2 — Sheets UI
+
+### BUG-004 — `noUnusedLocals` flagged dead symbols
+- **Symptom**: `npm run build` (which now runs `tsc`) failed: `numArg` imported
+  but unused in `stats.ts`, and `meta` declared but unused in `Grid.tsx`.
+- **Root cause**: The app's stricter `tsconfig` (`noUnusedLocals` /
+  `noUnusedParameters`) surfaced two leftover symbols that the engine's original,
+  looser config did not.
+- **Fix**: Removed the unused import and local.
+- **Test**: Guarded by `npm run lint` / `npm run build`.
+
+### BUG-005 — AutoSum test asserted an impossible range
+- **Symptom**: A store unit test expected `AutoSum` in A5 to produce
+  `=SUM(A1:A4)`, but A4 held text.
+- **Root cause**: The test, not the code — `autoSum` correctly stops the
+  contiguous-number scan at the first non-number (A4 = "text"), so no sum was
+  produced. The assertion was wrong.
+- **Fix**: Rewrote the test to use a clean numeric column; confirmed `autoSum`
+  produces `=SUM(C1:C3)` and evaluates to 60.
+- **Test**: `ui/state/store.test.ts` → "autoSum inserts a SUM formula …".
+
+### NOTE — Playwright browser version
+- The environment ships Chromium build 1194 while the installed `@playwright/test`
+  expects a newer build. Not a product bug: `playwright.config.ts` launches the
+  on-disk Chromium directly via `executablePath`, so E2E runs without a download.

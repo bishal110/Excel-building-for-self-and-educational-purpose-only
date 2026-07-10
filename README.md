@@ -1,54 +1,142 @@
-# AI_Office
+# AI_Office — Sheets
 
-An offline-first core office suite — a deep **spreadsheet** plus (planned)
-document and presentation editors — that runs in desktop browsers, as a
-single-file offline HTML app, as an installable PWA, and (config) as a Windows
-Electron app. Built independently; **not** a Microsoft 365 clone and no feature
-parity is claimed (see `KNOWN_LIMITS.md`).
+> An offline-first spreadsheet built from scratch in TypeScript + React.
+> Created for **self-learning and educational purposes** — to understand how a
+> real spreadsheet (formula engine, grid, macros) works under the hood.
 
-This repository is dedicated to AI_Office — built for self-learning and
-educational purposes only.
+AI_Office is **not** a Microsoft 365 clone and claims no feature parity. It is a
+genuinely useful spreadsheet with a deep, well-tested formula engine. Every
+intentional limitation is written down in [`KNOWN_LIMITS.md`](./KNOWN_LIMITS.md)
+— nothing is hidden.
 
-## Status
+---
 
-- **Phase 0 — Plan**: done (`docs/PHASE0_PLAN.md`).
-- **Phase 1 — Spreadsheet engine**: done. Framework-agnostic TypeScript formula
-  + grid + macro engine with 177 passing unit tests.
-- Phases 2–7 (Sheets UI, Docs, Slides, Shell, Packaging, Audit): not started.
+## ✨ Features
 
-## The engine (Phase 1)
+| Area | What works today |
+|------|------------------|
+| **Formula engine** | Excel-style precedence (`-2^2 = 4`), `$A$1` absolute refs, ranges, error codes (`#DIV/0!`, `#REF!`, `#VALUE!`, `#NAME?`, `#N/A`, `#NUM!`, `#CYCLE!`) that propagate through references and ranges, and cycle detection. |
+| **73 functions** | Math, statistics, text, logical, lookup (`VLOOKUP`/`HLOOKUP`/`INDEX`/`MATCH`/`CHOOSE`) and date basics. |
+| **Grid** | Virtualized rendering (smooth at 200×52 and beyond), mouse + keyboard selection, inline editing, column resize, freeze header row/column. |
+| **Editing** | Full shortcut set — copy/cut/paste, undo/redo (100 steps), bold/italic/underline, select-all, AutoSum (`Alt+=`), `F2`, `Tab`/`Enter`/`Esc`/`Delete`. |
+| **Formats** | Number formats including **₹ Indian (lakh/crore)** grouping, percent, currency, thousands. |
+| **Sheets** | Multiple sheets with tabs (add / rename / delete). |
+| **Data** | Sort, find & replace, insert/delete rows & columns with reference rewriting. |
+| **Import / export** | CSV (RFC-4180) and `.xlsx` (via SheetJS); save/open a whole workbook as a `.aioffice` JSON file. |
+| **Charts** | Basic line / bar chart builder from a selected range. |
+| **Macros** | JavaScript, Office-Scripts style, with a documented `sheet` API — **never** VBA. See [`docs/MACRO_API.md`](./docs/MACRO_API.md). |
+| **Persistence** | Autosaves to the browser (localStorage) and restores on reload. |
 
-Pure TypeScript, zero UI dependencies — importable from `src/engine`.
+---
 
-- **Formula engine**: tokenizer → parser → evaluator with Excel operator
-  precedence (`-2^2 = 4`), `$A$1` references and ranges, and Excel error codes
-  (`#DIV/0!`, `#REF!`, `#VALUE!`, `#NAME?`, `#N/A`, `#NUM!`, `#CYCLE!`) that
-  propagate through references and range aggregations.
-- **73 functions**: math, stats, text, logical, lookup (VLOOKUP/HLOOKUP/
-  INDEX/MATCH/CHOOSE), and date basics.
-- **Grid ops**: insert/delete rows & columns with reference rewriting (dead refs
-  become `#REF!`), sort, fill-down/right, find & replace, cycle detection.
-- **Number formats** including ₹ Indian (lakh/crore) grouping.
-- **Macros** — JavaScript, Office-Scripts style (see `docs/MACRO_API.md`).
+## 🚀 Quick start
 
-## Commands
+**Prerequisites:** [Node.js](https://nodejs.org/) 20 or newer.
 
 ```bash
-npm install       # install dev dependencies
-npm test          # run the full unit-test suite (Vitest)
-npm run coverage  # run tests with coverage
-npm run lint      # type-check (tsc --noEmit)
+# 1. Install dependencies
+npm install
+
+# 2. Start the app in development mode
+npm run dev
 ```
 
-## Layout
+Then open the URL printed in the terminal (default **http://localhost:3000**).
+
+### Build a production version
+
+```bash
+npm run build     # type-checks, then bundles into dist/
+npm run preview   # serve the built app locally to check it
+```
+
+The contents of `dist/` are static files — you can host them on any web server,
+including a simple LAN server:
+
+```bash
+npx vite preview --host        # serve on your network
+# or, from the dist/ folder:
+python -m http.server 8080     # then open http://<this-pc-ip>:8080
+```
+
+---
+
+## 🧪 Testing
+
+```bash
+npm test          # run all unit tests (Vitest)
+npm run coverage  # unit tests with a coverage report
+npm run lint      # type-check with the TypeScript compiler
+npm run e2e       # end-to-end browser tests (Playwright)
+```
+
+- **198 unit tests** cover the formula engine, grid operations, CSV, and the app store.
+- **Playwright E2E** covers the core flow: edit → formula → insert row → undo → export.
+
+> First-time E2E users may need browsers: `npm run e2e:install`.
+
+---
+
+## 📁 Project structure
 
 ```
-src/engine/
-  formula/   tokenizer, parser, evaluator, references, errors, functions/
-  grid/      workbook, sheet, cell, mutations, ops, serialize
-  format/    numberFormat (incl. ₹ Indian grouping)
-  macro/     runtime (documented sheet API)
-docs/        PHASE0_PLAN.md, MACRO_API.md
-BUGLOG.md    every bug: symptom, root cause, fix, test
-KNOWN_LIMITS.md   what is intentionally not implemented
+src/
+├── engine/                 # Framework-agnostic spreadsheet engine (no React)
+│   ├── formula/            #   tokenizer → parser → evaluator, 73 functions
+│   ├── grid/               #   workbook, sheet, mutations, sort/fill/find
+│   ├── format/             #   number formatting (incl. ₹ Indian grouping)
+│   └── macro/              #   sandboxed JS macro runtime + sheet API
+├── io/                     # CSV, XLSX, and .aioffice project serialization
+└── ui/                     # React application
+    ├── state/              #   store (undo/redo, selection, clipboard, autosave)
+    └── components/         #   Grid, Toolbar, FormulaBar, tabs, modals
+e2e/                        # Playwright end-to-end tests
+docs/                       # Architecture plan and macro API reference
 ```
+
+The **engine is deliberately independent of React** — it is pure TypeScript,
+fully unit-tested, and could be reused outside this app.
+
+---
+
+## 📜 Available scripts
+
+| Script | What it does |
+|--------|--------------|
+| `npm run dev` | Start the Vite dev server with hot reload. |
+| `npm run build` | Type-check and produce a production build in `dist/`. |
+| `npm run preview` | Serve the production build locally. |
+| `npm test` | Run the unit-test suite once. |
+| `npm run test:watch` | Run unit tests in watch mode. |
+| `npm run coverage` | Unit tests with coverage. |
+| `npm run lint` | Type-check only (no emit). |
+| `npm run e2e` | Run Playwright end-to-end tests. |
+
+---
+
+## 🗺️ Roadmap
+
+This project is being built in phases:
+
+- ✅ **Phase 0** — Architecture & plan ([`docs/PHASE0_PLAN.md`](./docs/PHASE0_PLAN.md))
+- ✅ **Phase 1** — Spreadsheet engine (formula / grid / macro)
+- ✅ **Phase 2** — Sheets UI (this release)
+- ⬜ **Phase 3** — Document editor
+- ⬜ **Phase 4** — Presentation editor
+- ⬜ **Phase 5** — App shell, in-app help, persistence
+- ⬜ **Phase 6** — Packaging (single-file HTML, PWA, desktop)
+- ⬜ **Phase 7** — Adversarial audit & polish
+
+See [`KNOWN_LIMITS.md`](./KNOWN_LIMITS.md) for what is intentionally out of scope,
+and [`BUGLOG.md`](./BUGLOG.md) for the running record of bugs found and fixed.
+
+---
+
+## 🤝 Contributing
+
+This is a personal learning project. If you'd like to explore or extend it, see
+[`CONTRIBUTING.md`](./CONTRIBUTING.md).
+
+## 📄 License
+
+[MIT](./LICENSE) — free to use, learn from, and build upon.

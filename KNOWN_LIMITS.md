@@ -35,8 +35,28 @@ no feature parity is claimed. Items are moved here rather than silently dropped.
 
 ## Not started yet (planned by phase)
 
-- Sheets UI, charts, CSV/XLSX import-export — Phase 2.
 - Docs editor and `.docx` export — Phase 3.
 - Slides editor and present mode — Phase 4.
-- Shell, help audit, autosave/persistence — Phase 5.
+- Shell, help audit, autosave/persistence hardening — Phase 5.
 - Packaging (single-file HTML, PWA, Electron) — Phase 6.
+
+## Sheets UI (Phase 2) — current limitations
+
+- **Freeze panes are basic.** Toggling Freeze pins rows/columns above and left
+  of the active cell via CSS sticky positioning; it is not a full split-pane
+  implementation and does not persist a scroll offset.
+- **`.xlsx` fidelity is limited.** Import/export via SheetJS carries cell values
+  and formulas but **not** styles, number formats, merged cells, or charts. No
+  round-trip formatting fidelity is claimed.
+- **Charts are minimal.** The chart builder renders a single line/bar series
+  (inline SVG) from the first numeric column of the selection. No axes labels
+  config, legends, multi-series, or export-as-image yet.
+- **Copy/paste is in-app only.** Clipboard operations move data within the app
+  (with relative-ref adjustment); they do not integrate with the OS clipboard.
+- **Formatting does not survive `.xlsx`.** Bold/italic/number-format live in the
+  `.aioffice` project file and autosave, but are dropped on `.xlsx` export.
+- **Bundle size.** The production JS bundle is large (~680 kB) because SheetJS is
+  imported eagerly; code-splitting `.xlsx` behind a dynamic import is a Phase-6
+  packaging task.
+- **Autosave is single-slot.** One workbook is autosaved to `localStorage`;
+  there is no multi-document manager yet (Phase 5).
