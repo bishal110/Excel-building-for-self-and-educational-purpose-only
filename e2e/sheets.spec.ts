@@ -67,6 +67,32 @@ test('macro fills cells via the sheet API', async ({ page }) => {
   await expect(page.locator('[data-cell="A3"]')).toHaveText('9');
 });
 
+test('freeze keeps the header row visible while scrolling', async ({ page }) => {
+  // Header row + enough data rows to scroll.
+  await editCell(page, 'A1', 'Header');
+  for (let r = 2; r <= 25; r++) await editCell(page, `A${r}`, String(r));
+
+  const grid = page.getByTestId('grid');
+  await grid.evaluate((el) => {
+    el.scrollTop = 0;
+    el.scrollLeft = 0;
+  });
+  await page.locator('[data-cell="A2"]').click();
+  await page.getByRole('button', { name: 'Freeze' }).click();
+
+  // Scroll down; the frozen header cell A1 must remain visible near the top.
+  await grid.evaluate((el) => {
+    el.scrollTop = 300;
+  });
+  const a1 = page.locator('[data-cell="A1"]');
+  await expect(a1).toBeVisible();
+  await expect(a1).toHaveText('Header');
+  // A1 must stay pinned within the top band of the grid (not scrolled away).
+  const a1Box = await a1.boundingBox();
+  const gridBox = await grid.boundingBox();
+  expect(a1Box!.y - gridBox!.y).toBeLessThan(40);
+});
+
 test('help panel lists only implemented shortcuts', async ({ page }) => {
   await page.getByTestId('open-help').click();
   const help = page.getByTestId('help-grid');

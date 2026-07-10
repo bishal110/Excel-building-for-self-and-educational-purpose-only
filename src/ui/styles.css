@@ -104,26 +104,9 @@ body { color: var(--text); background: var(--bg); font-size: 13px; }
   background: #fff;
 }
 .grid-content { position: relative; }
-.col-header {
-  position: sticky;
-  top: 0;
-  height: var(--header-h);
-  z-index: 3;
-}
-.corner {
-  position: sticky;
-  left: 0;
-  top: 0;
-  height: var(--header-h);
-  background: var(--panel);
-  border-right: 1px solid var(--border-strong);
-  border-bottom: 1px solid var(--border-strong);
-  z-index: 4;
-  display: inline-block;
-}
+/* Column header cells (positioned via inline left/top tied to scroll). */
 .col-head {
   position: absolute;
-  top: 0;
   height: var(--header-h);
   line-height: var(--header-h);
   text-align: center;
@@ -133,8 +116,17 @@ body { color: var(--text); background: var(--bg); font-size: 13px; }
   font-weight: 600;
   color: var(--muted);
   user-select: none;
+  z-index: 8;
 }
 .col-head.col-selected { background: var(--accent-soft); color: var(--accent); }
+.corner {
+  position: absolute;
+  height: var(--header-h);
+  background: var(--panel);
+  border-right: 1px solid var(--border-strong);
+  border-bottom: 1px solid var(--border-strong);
+  z-index: 10;
+}
 .col-resize {
   position: absolute;
   right: -3px;
@@ -143,10 +135,8 @@ body { color: var(--text); background: var(--bg); font-size: 13px; }
   height: 100%;
   cursor: col-resize;
 }
-.grid-row { position: absolute; left: 0; width: 100%; height: var(--row-h); }
 .row-header {
-  position: sticky;
-  left: 0;
+  position: absolute;
   height: var(--row-h);
   line-height: var(--row-h);
   text-align: center;
@@ -154,12 +144,10 @@ body { color: var(--text); background: var(--bg); font-size: 13px; }
   border-right: 1px solid var(--border-strong);
   border-bottom: 1px solid var(--border);
   color: var(--muted);
-  z-index: 1;
-  display: inline-block;
+  z-index: 7;
 }
 .cell {
   position: absolute;
-  top: 0;
   height: var(--row-h);
   line-height: calc(var(--row-h) - 1px);
   padding: 0 5px;
@@ -169,8 +157,9 @@ body { color: var(--text); background: var(--bg); font-size: 13px; }
   white-space: nowrap;
   background: #fff;
 }
+.cell.frozen { background: #fff; box-shadow: 0 0 0 0.5px var(--border); }
 .cell.selected { background: var(--selected); }
-.cell.active { outline: 2px solid var(--accent); outline-offset: -2px; z-index: 2; background: #fff; }
+.cell.active { outline: 2px solid var(--accent); outline-offset: -2px; background: #fff; }
 .cell-text { display: block; overflow: hidden; text-overflow: ellipsis; }
 .cell-editor {
   position: absolute;
