@@ -28,6 +28,51 @@ on the roadmap.
 - **Macros are opt-in per click, never on open.** The single biggest lesson
   from Office's macro-virus era, applied from day one.
 
+## Why the scariest attacks don't apply here (yet)
+
+The most common real-world app failures — a user editing a URL/parameter to
+touch *someone else's* data (IDOR), bots brute-forcing logins, scraped or
+leaked databases — all require a **server that trusts clients**. AI_Office has
+**no server, no accounts, no shared database, and no network endpoints**. Your
+data exists only on your device. A bot cannot bypass a security layer that has
+no door on the internet. This is not luck; it is the deliberate local-first
+architecture.
+
+## ⚠️ The Online Rules — binding for any future networked floor
+
+The moment anyone adds an online feature to this project (cloud save, sharing,
+collaboration, an AI proxy), the rules below are **non-negotiable**. They exist
+so this app never repeats the classic mistakes (e.g. the restaurant app whose
+table number could be changed from the browser):
+
+1. **Never trust the client.** Anything arriving from a browser — IDs, prices,
+   table numbers, role flags, hidden fields, headers — is attacker-controlled
+   input. The server re-checks *everything*.
+2. **Authorize every request, not just login.** Authentication says who you
+   are; authorization says what you may touch. Every read/write must verify
+   "does *this* user own *this* resource?" server-side. Sequential or guessable
+   IDs must never be the only protection — use random IDs *and* ownership checks.
+3. **Validate server-side, always.** Client-side validation is UX, not
+   security — bots skip the UI entirely and talk straight to the API.
+4. **Rate-limit and bot-proof by default.** Per-IP and per-account limits on
+   every endpoint, exponential backoff on auth, CAPTCHA/proof-of-work on
+   abuse-prone flows, and monitoring that alerts on anomalies.
+5. **Secrets never ship to the client.** API keys, tokens, and credentials
+   live server-side only. Anything in a JS bundle is public — assume it is
+   read the day it ships.
+6. **Least privilege everywhere.** The database user, the API token, the
+   service account — each gets the minimum rights it needs, so one breach
+   doesn't become a full breach.
+7. **HTTPS only, secure cookies, CSRF protection, security headers** (CSP,
+   `frame-ancestors`, HSTS) — the boring baseline, applied without exceptions.
+8. **Log security events and test like an attacker.** Every new endpoint gets
+   an adversarial test that *tries* to access another user's data — the same
+   philosophy as our Phase-7 audit, pointed at authorization.
+
+Rule of thumb inherited from this project's method: **a feature is not done
+when it works — it is done when its abuse cases have failing-then-passing
+tests.**
+
 ## Reporting
 
 This is an educational project — if you find an issue, please open a GitHub
