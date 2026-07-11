@@ -125,3 +125,24 @@ No product bugs found. Notable safety additions:
 - Whole-suite `.aioffice` save/open is covered by a round-trip unit test.
 - A responsive E2E audit asserts no horizontal page overflow at 360/768/1366px
   across all three modules; the existing layout passed with no changes needed.
+
+## Phase 6 — Packaging
+
+### BUG-010 — `import.meta.env` failed the type-check
+- **Symptom**: `npm run build` failed with TS2339 (`Property 'env' does not
+  exist on type 'ImportMeta'`) after adding the service-worker registration.
+- **Root cause**: `tsconfig.json` listed explicit `types`, which suppresses
+  automatic inclusion of Vite's client type definitions.
+- **Fix**: Added `"vite/client"` to the `types` array.
+- **Test**: Guarded by `npm run build` (tsc runs first).
+
+### NOTE — Electron binaries unreachable from the build environment
+- `npm install electron` fails here with HTTP 403: the environment's network
+  policy blocks Electron's GitHub-release binary download. Not a product bug and
+  not fixable in-container. Electron is installed with
+  `ELECTRON_SKIP_BINARY_DOWNLOAD=1` so the dependency entry is correct for
+  Windows machines; `BUILD_ON_WINDOWS.md` documents the two-command build.
+- Verified in-container instead: `dist/` build, LAN serve script, the standalone
+  `AI_Office.html` over `file://` (formula `=21*2` → 42, all modules render,
+  zero page errors), and the PWA (manifest valid, service worker `activated`,
+  offline reload + formula evaluation with the network off).

@@ -35,7 +35,7 @@ no feature parity is claimed. Items are moved here rather than silently dropped.
 
 ## Not started yet (planned by phase)
 
-- Packaging (single-file HTML, PWA, Electron) — Phase 6.
+- Final adversarial audit & polish — Phase 7.
 
 ## Sheets UI (Phase 2) — current limitations
 
@@ -100,3 +100,24 @@ no feature parity is claimed. Items are moved here rather than silently dropped.
 - **Responsive down to 360px, not a dedicated mobile UI.** Layouts reflow and
   avoid horizontal overflow, but the grid and editors are still designed for a
   pointer + keyboard; touch gestures are not specially handled.
+
+## Packaging (Phase 6) — current limitations
+
+- **No Windows `.exe` was produced in the build environment.** The cloud
+  container's network policy blocks Electron's binary downloads (HTTP 403), so
+  `npm run dist:win-*` cannot run there. The complete config (`electron-builder.yml`,
+  `electron/main.cjs`, npm scripts) is committed and verified as far as possible;
+  building on a Windows machine is two commands — see `BUILD_ON_WINDOWS.md`.
+  The Electron shell itself has therefore **not been smoke-tested** — run
+  `npm run electron:dev` on Windows before trusting the packaged app.
+- **Lighthouse PWA score was not run** (no Lighthouse in the environment). The
+  PWA was verified functionally instead: valid manifest + icons, service worker
+  activates, and the app reloads and computes formulas with the network off.
+- **Single-file build excludes the PWA.** `AI_Office.html` runs from `file://`,
+  where service workers are unavailable — it is inherently offline anyway.
+- **Service worker is cache-on-visit.** Offline works after the first successful
+  visit; a brand-new device that has never loaded the app online cannot start
+  offline (inherent to PWAs).
+- **No code-splitting yet.** The bundle ships as one ~1.4 MB JS file (SheetJS,
+  TipTap, and docx are all eager). Acceptable for LAN/offline use; splitting
+  remains an optimization candidate for Phase 7.

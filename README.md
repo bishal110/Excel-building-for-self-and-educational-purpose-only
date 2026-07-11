@@ -46,21 +46,20 @@ npm run dev
 
 Then open the URL printed in the terminal (default **http://localhost:3000**).
 
-### Build a production version
+## 📦 Every way to run AI_Office
 
-```bash
-npm run build     # type-checks, then bundles into dist/
-npm run preview   # serve the built app locally to check it
-```
+| Mode | Command | What you get |
+|------|---------|--------------|
+| **Dev server** | `npm run dev` | Hot-reload development at `http://localhost:3000`. |
+| **Production build** | `npm run build` | Static site in `dist/` (type-check + Help audit run first). |
+| **LAN server** | `npm run build && npm run serve:lan` | Serves `dist/` at `http://<this-pc-ip>:8080` for other PCs/phones on the network. (`python -m http.server 8080` from inside `dist/` works too.) |
+| **Single offline file** | `npm run build:single` | `dist-single/AI_Office.html` — one ~1.4 MB file with everything inlined. Copy it anywhere and **double-click**; no install, no server, works fully offline. |
+| **Install as an app (PWA)** | serve `dist/` over http(s), open in Chrome/Edge | The browser offers **“Install app”** (desktop) / **“Add to Home screen”** (Android/iOS). Works offline after the first visit — the service worker caches the app. |
+| **Windows desktop (.exe)** | `npm run dist:win-arm64` or `dist:win-x64` **on a Windows machine** | Portable `AI_Office.exe` in `release/`. See [`BUILD_ON_WINDOWS.md`](./BUILD_ON_WINDOWS.md) — the cloud build environment cannot download Electron's binaries, so this one step runs on your PC. |
 
-The contents of `dist/` are static files — you can host them on any web server,
-including a simple LAN server:
-
-```bash
-npx vite preview --host        # serve on your network
-# or, from the dist/ folder:
-python -m http.server 8080     # then open http://<this-pc-ip>:8080
-```
+> Honest note: the PWA's offline behaviour was verified functionally (service
+> worker active + the app reloads and computes while the network is off). A
+> Lighthouse PWA score was not run in this environment.
 
 ---
 
@@ -128,8 +127,11 @@ which `execCommand` reliably provides.
 | Script | What it does |
 |--------|--------------|
 | `npm run dev` | Start the Vite dev server with hot reload. |
-| `npm run build` | Type-check and produce a production build in `dist/`. |
+| `npm run build` | Type-check, run the Help audit, and build into `dist/`. |
+| `npm run build:single` | Build the standalone `dist-single/AI_Office.html`. |
 | `npm run preview` | Serve the production build locally. |
+| `npm run serve:lan` | Serve the production build on the local network (port 8080). |
+| `npm run dist:win-x64` / `dist:win-arm64` | Build the Windows portable `.exe` (run on Windows — see `BUILD_ON_WINDOWS.md`). |
 | `npm test` | Run the unit-test suite once. |
 | `npm run test:watch` | Run unit tests in watch mode. |
 | `npm run coverage` | Unit tests with coverage. |
@@ -147,8 +149,8 @@ This project is being built in phases:
 - ✅ **Phase 2** — Sheets UI
 - ✅ **Phase 3** — Document editor
 - ✅ **Phase 4** — Presentation editor
-- ✅ **Phase 5** — App shell, in-app help, persistence (this release)
-- ⬜ **Phase 6** — Packaging (single-file HTML, PWA, desktop)
+- ✅ **Phase 5** — App shell, in-app help, persistence
+- ✅ **Phase 6** — Packaging: LAN serve, single-file HTML, PWA, Electron config (this release)
 - ⬜ **Phase 7** — Adversarial audit & polish
 
 See [`KNOWN_LIMITS.md`](./KNOWN_LIMITS.md) for what is intentionally out of scope,

@@ -5,17 +5,23 @@
   "type": "module",
   "description": "AI_Office — an offline-first spreadsheet suite (built for self-learning and educational purposes).",
   "license": "MIT",
+  "main": "electron/main.cjs",
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
     "audit:help": "vitest run src/ui/keybindings.audit.test.ts",
     "build": "tsc --noEmit && npm run audit:help && vite build",
+    "build:single": "vite build --config vite.singlefile.config.ts && node scripts/finish-singlefile.mjs",
     "preview": "vite preview --port=4173 --host=0.0.0.0",
+    "serve:lan": "vite preview --port=8080 --host=0.0.0.0",
     "test": "vitest run",
     "test:watch": "vitest",
     "coverage": "vitest run --coverage",
     "lint": "tsc --noEmit",
     "e2e": "playwright test",
-    "e2e:install": "playwright install chromium"
+    "e2e:install": "playwright install chromium",
+    "electron:dev": "npm run build && electron .",
+    "dist:win-x64": "npm run build && electron-builder --win portable --x64",
+    "dist:win-arm64": "npm run build && electron-builder --win portable --arm64"
   },
   "dependencies": {
     "@tiptap/extension-font-family": "^2.27.2",
@@ -43,9 +49,12 @@
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.4",
     "@vitest/coverage-v8": "^2.1.9",
+    "electron": "^33.4.11",
+    "electron-builder": "^25.1.8",
     "jsdom": "^25.0.1",
     "typescript": "~5.8.2",
     "vite": "^6.0.7",
+    "vite-plugin-singlefile": "^2.3.3",
     "vitest": "^2.1.9"
   }
 }

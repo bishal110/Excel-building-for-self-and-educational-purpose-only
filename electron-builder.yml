@@ -1,0 +1,19 @@
+appId: com.bishal110.aioffice
+productName: AI_Office
+directories:
+  output: release
+  buildResources: assets
+files:
+  - dist/**/*
+  - electron/**/*
+  - package.json
+win:
+  # portable = single .exe (needs NSIS/Wine — build this on Windows);
+  # zip = win-unpacked folder with AI_Office.exe inside (cross-buildable from Linux).
+  target:
+    - target: portable
+      arch: [x64, arm64]
+  icon: assets/icon.png
+# Unsigned builds: Windows SmartScreen will warn on first run — expected for
+# a personal/educational build.
+forceCodeSigning: false
