@@ -141,7 +141,10 @@ test('AUDIT: every Docs control runs without a runtime error', async ({ page }) 
     ['Insert image', () => rb.getByTitle('Insert image').click()],
     ['Insert link', () => { return editor.click().then(() => rb.getByTitle('Insert link').click()); }],
     ['Print', () => rb.getByText('Print / PDF').click()],
-    ['Export docx', () => page.getByTestId('export-docx').click()],
+    ['Export docx', () => page.getByTestId('export-select').selectOption('docx')],
+    ['Export md', () => page.getByTestId('export-select').selectOption('md')],
+    ['Export html', () => page.getByTestId('export-select').selectOption('html')],
+    ['Export txt', () => page.getByTestId('export-select').selectOption('txt')],
   ];
 
   for (const [name, fn] of clicks) {

@@ -12,9 +12,10 @@ import TextStyle from '@tiptap/extension-text-style';
 import FontFamily from '@tiptap/extension-font-family';
 import TextAlign from '@tiptap/extension-text-align';
 import { exportDocxBlob } from '../../io/docx';
+import { docToMarkdown, docToStandaloneHtml } from '../../io/markdown';
 import { textStats } from '../../io/wordCount';
 import { downloadBlob } from '../fileUtils';
-import { DocRibbon } from './DocRibbon';
+import { DocRibbon, type DocExportFormat } from './DocRibbon';
 
 const DOC_KEY = 'ai-office:doc';
 
@@ -73,18 +74,34 @@ export function DocsView() {
 
   const stats = textStats(editor.getText());
 
-  const exportDocx = async () => {
-    const blob = await exportDocxBlob(editor.getJSON());
-    downloadBlob(
-      blob,
-      'document.docx',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    );
+  const exportAs = async (format: DocExportFormat) => {
+    switch (format) {
+      case 'docx':
+        downloadBlob(
+          await exportDocxBlob(editor.getJSON()),
+          'document.docx',
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        );
+        break;
+      case 'md':
+        downloadBlob(docToMarkdown(editor.getJSON()), 'document.md', 'text/markdown');
+        break;
+      case 'html':
+        downloadBlob(
+          docToStandaloneHtml(editor.getHTML(), 'AI_Office document'),
+          'document.html',
+          'text/html',
+        );
+        break;
+      case 'txt':
+        downloadBlob(editor.getText(), 'document.txt', 'text/plain');
+        break;
+    }
   };
 
   return (
     <>
-      <DocRibbon editor={editor} onExportDocx={exportDocx} onPrint={() => window.print()} />
+      <DocRibbon editor={editor} onExport={exportAs} onPrint={() => window.print()} />
       <div className="doc-scroll">
         <div className="doc-page" data-testid="doc-page">
           <EditorContent editor={editor} />

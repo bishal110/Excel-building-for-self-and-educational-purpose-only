@@ -60,6 +60,13 @@ no feature parity is claimed. Items are moved here rather than silently dropped.
 
 ## Docs UI (Phase 3) — current limitations
 
+- **Legacy `.doc` (pre-2007 binary Word format) is not offered** — it is a
+  proprietary binary format that even Microsoft treats as legacy; `.docx`,
+  `.md`, `.html`, and `.txt` cover modern needs. Direct-to-PDF file writing
+  (without the browser print dialog) would need a PDF library — roadmap.
+- **Google Drive integration is designed but not wired** — it needs a free
+  OAuth Client ID that only the project owner can create, and a live Google
+  login to verify. Full design: `docs/GOOGLE_DRIVE.md`.
 - **`.docx` export is a subset.** Paragraphs, headings, bold/italic/underline,
   alignment, bullet/numbered lists, and tables are exported. **Images, hyperlinks
   as clickable links, font-family, and custom colors are not yet written to the

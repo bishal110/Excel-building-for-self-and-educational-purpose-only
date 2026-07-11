@@ -49,7 +49,8 @@ Every intentional limitation is written down in
 | **Import / export** | CSV (RFC-4180) and `.xlsx` (via SheetJS); save/open a whole workbook as a `.aioffice` JSON file. |
 | **Charts** | Basic line / bar chart builder from a selected range. |
 | **Macros** | JavaScript, Office-Scripts style, with a documented `sheet` API — **never** VBA. See [`docs/MACRO_API.md`](./docs/MACRO_API.md). |
-| **Documents** | Rich-text editor (TipTap) with a ribbon — styles/headings, font, bold/italic/underline, lists, alignment, insert table/image/link — a page-styled canvas, live word count, and **export to `.docx`** plus print-to-PDF. |
+| **Documents** | Rich-text editor (TipTap) with a ribbon — styles/headings, font, bold/italic/underline, lists, alignment, insert table/image/link — a page-styled canvas, live word count, and Word-style **Save As: `.docx`, `.md`, `.html`, `.txt`** plus print-to-PDF. |
+| **Cloud (planned)** | Google Drive save/open is fully designed — least-privilege `drive.file` scope, no server of ours — see [`docs/GOOGLE_DRIVE.md`](./docs/GOOGLE_DRIVE.md); needs only a free OAuth Client ID to wire up. |
 | **Presentations** | Slide deck editor — title/body/image layouts, four themes, **drag-to-reorder** slide list, speaker notes, **full-screen present mode** with keyboard nav, and export the deck to PDF. |
 | **App shell** | A **File menu** (New / Open / Save whole-suite `.aioffice` project) plus contextual module tabs. In-app Help lists only shortcuts that actually work — a **build-time audit fails the build** if Help and the key handler diverge. Responsive down to 360px. |
 | **Persistence** | Autosaves the workbook, the document, and the slide deck to the browser (localStorage); one `.aioffice` file saves/opens all three modules together. |

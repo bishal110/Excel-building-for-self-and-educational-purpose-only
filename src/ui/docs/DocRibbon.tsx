@@ -3,13 +3,15 @@ import { sanitizeImageUrl, sanitizeLinkUrl } from '../security';
 
 const FONTS = ['Default', 'Arial', 'Georgia', 'Times New Roman', 'Courier New'];
 
+export type DocExportFormat = 'docx' | 'md' | 'html' | 'txt';
+
 export function DocRibbon({
   editor,
-  onExportDocx,
+  onExport,
   onPrint,
 }: {
   editor: Editor;
-  onExportDocx: () => void;
+  onExport: (format: DocExportFormat) => void;
   onPrint: () => void;
 }) {
   const active = (name: string, attrs?: Record<string, unknown>) =>
@@ -110,7 +112,22 @@ export function DocRibbon({
       </div>
 
       <div className="tb-group">
-        <button data-testid="export-docx" onClick={onExportDocx}>Export .docx</button>
+        <select
+          data-testid="export-select"
+          value=""
+          onChange={(e) => {
+            const v = e.target.value as DocExportFormat | '';
+            if (v) onExport(v);
+            e.target.value = '';
+          }}
+          title="Download the document in a chosen format"
+        >
+          <option value="" disabled>Download as…</option>
+          <option value="docx">Word (.docx)</option>
+          <option value="md">Markdown (.md)</option>
+          <option value="html">Web page (.html)</option>
+          <option value="txt">Plain text (.txt)</option>
+        </select>
         <button onClick={onPrint}>Print / PDF</button>
       </div>
     </div>
