@@ -1,16 +1,18 @@
+import { sanitizeImageUrl } from '../security';
 import type { Slide, Theme } from './slidesStore';
 
 /** A miniature render of a slide, reused by the list and present mode. */
 export function SlideContent({ slide }: { slide: Slide }) {
+  const safeImage = slide.image ? sanitizeImageUrl(slide.image) : null;
   return (
     <div className={`slide-inner layout-${slide.layout}`}>
       {slide.layout === 'image' ? (
         <>
           <h2 className="slide-title">{slide.title}</h2>
-          {slide.image ? (
-            <img className="slide-image" src={slide.image} alt={slide.title} />
+          {safeImage ? (
+            <img className="slide-image" src={safeImage} alt={slide.title} />
           ) : (
-            <div className="slide-image placeholder">Image (set a URL)</div>
+            <div className="slide-image placeholder">Image (set a valid http(s) URL)</div>
           )}
         </>
       ) : slide.layout === 'title' ? (

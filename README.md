@@ -1,13 +1,37 @@
-# AI_Office — Sheets
+<p align="center">
+  <img src="assets/banner.svg" alt="AI_Office — an office suite built from scratch for education" width="100%" />
+</p>
 
-> An offline-first spreadsheet built from scratch in TypeScript + React.
-> Created for **self-learning and educational purposes** — to understand how a
-> real spreadsheet (formula engine, grid, macros) works under the hood.
+<p align="center">
+  <img alt="tests" src="https://img.shields.io/badge/unit_tests-259_passing-16a34a" />
+  <img alt="e2e" src="https://img.shields.io/badge/E2E-20_passing-16a34a" />
+  <img alt="typescript" src="https://img.shields.io/badge/TypeScript-strict-3178c6" />
+  <img alt="bundle" src="https://img.shields.io/badge/offline_single_file-1.4_MB-2563eb" />
+  <img alt="license" src="https://img.shields.io/badge/license-MIT-64748b" />
+</p>
 
-AI_Office is **not** a Microsoft 365 clone and claims no feature parity. It is a
-genuinely useful spreadsheet with a deep, well-tested formula engine. Every
-intentional limitation is written down in [`KNOWN_LIMITS.md`](./KNOWN_LIMITS.md)
-— nothing is hidden.
+# AI_Office
+
+> An office suite — **Sheets, Docs, and Slides** — built from scratch in
+> TypeScript + React, for **self-learning and educational purposes only**: to
+> expose the skeleton of the world's most-used software so anyone can study
+> it, learn from it, and build the next floor.
+
+AI_Office is **not** a Microsoft 365 clone and claims no feature parity. It is
+a genuinely useful core suite with a deep, well-tested spreadsheet engine.
+Every intentional limitation is written down in
+[`KNOWN_LIMITS.md`](./KNOWN_LIMITS.md) — nothing is hidden.
+
+## 📚 Start here — the guided tour
+
+| Read this | To learn |
+|---|---|
+| 🦴 [**The Anatomy**](./docs/ANATOMY.md) | How a spreadsheet *actually* works inside — tokenizer → parser → evaluator, dependency graphs, virtualization — with diagrams, using this repo's real code |
+| ⚖️ [**vs Microsoft**](./docs/VS_MICROSOFT.md) | The honest ledger: what an advanced AI replicated in days, what Microsoft still does better, and *why* those moats exist |
+| 🔐 [**Security**](./docs/SECURITY.md) | The threat model of a local-first office app — what's mitigated, what's inherent, what's on the roadmap |
+| 🤖 [**AI Integration**](./docs/AI_INTEGRATION.md) | How a Copilot-style assistant would bolt onto this architecture (design exploration, with real API costs) |
+| 🐛 [**BUGLOG**](./BUGLOG.md) | Every one of the 13 bugs found across 7 phases — symptom, root cause, fix, guarding test |
+| 🗺️ [**Build plan**](./docs/PHASE0_PLAN.md) & [**Final audit**](./docs/PHASE7_REPORT.md) | How the project was planned, phased, and adversarially audited |
 
 ---
 

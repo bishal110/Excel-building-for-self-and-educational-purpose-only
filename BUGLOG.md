@@ -190,3 +190,17 @@ Also added: a visible `:focus-visible` indicator on the grid container,
 10k-cell fill + `SUM` performance test (both well under their ceilings), undo
 across sheet switches, per-sheet formula isolation, and cross-viewport
 screenshots at 360/768/1366 px (0 px horizontal overflow at all three).
+
+## Security pass (post-Phase 7)
+
+### HARDENING-001 — user-supplied URLs were rendered unsanitized
+- **Symptom (potential)**: A shared `.aioffice` file or pasted URL could set a
+  slide image or document image/link to `javascript:`/`data:text/html`
+  content. Modern browsers block script execution in `img src`, but the URLs
+  flowed into the DOM unvalidated — a weak link for future features.
+- **Fix**: Added `src/ui/security.ts` (`sanitizeImageUrl`, `sanitizeLinkUrl`,
+  unit-tested) and applied it at every user-URL entry point: slide image
+  rendering, Docs insert-image, Docs insert-link. Only `http(s)`, `mailto`,
+  and `data:image/*` pass.
+- **Test**: `ui/security.test.ts` (7 cases incl. case-mangled `jAvAsCrIpT:`).
+- The full threat model now lives in `docs/SECURITY.md`.

@@ -1,4 +1,5 @@
 import type { Editor } from '@tiptap/react';
+import { sanitizeImageUrl, sanitizeLinkUrl } from '../security';
 
 const FONTS = ['Default', 'Arial', 'Georgia', 'Times New Roman', 'Courier New'];
 
@@ -82,7 +83,10 @@ export function DocRibbon({
         <button
           onClick={() => {
             const url = prompt('Image URL');
-            if (url) editor.chain().focus().setImage({ src: url }).run();
+            if (!url) return;
+            const safe = sanitizeImageUrl(url);
+            if (safe) editor.chain().focus().setImage({ src: safe }).run();
+            else alert('Only http(s) or data:image URLs are allowed.');
           }}
           title="Insert image"
         >
@@ -91,8 +95,13 @@ export function DocRibbon({
         <button
           onClick={() => {
             const url = prompt('Link URL');
-            if (url) editor.chain().focus().setLink({ href: url }).run();
-            else editor.chain().focus().unsetLink().run();
+            if (!url) {
+              editor.chain().focus().unsetLink().run();
+              return;
+            }
+            const safe = sanitizeLinkUrl(url);
+            if (safe) editor.chain().focus().setLink({ href: safe }).run();
+            else alert('Only http(s) or mailto links are allowed.');
           }}
           title="Insert link"
         >

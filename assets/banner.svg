@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 220" font-family="ui-monospace, 'Cascadia Code', Consolas, monospace">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1e3a8a"/>
+      <stop offset="1" stop-color="#2563eb"/>
+    </linearGradient>
+  </defs>
+  <rect width="900" height="220" rx="14" fill="url(#bg)"/>
+
+  <!-- mini grid -->
+  <g transform="translate(40,50)">
+    <g stroke="#ffffff33" stroke-width="1">
+      <rect x="0" y="0" width="330" height="120" fill="#ffffff10" rx="4"/>
+      <line x1="0" y1="30" x2="330" y2="30"/>
+      <line x1="0" y1="60" x2="330" y2="60"/>
+      <line x1="0" y1="90" x2="330" y2="90"/>
+      <line x1="110" y1="0" x2="110" y2="120"/>
+      <line x1="220" y1="0" x2="220" y2="120"/>
+    </g>
+    <!-- cells filling in, animated -->
+    <g font-size="14" fill="#ffffff">
+      <text x="12" y="21">WHP</text>
+      <text x="122" y="21">Freq</text>
+      <text x="232" y="21">Prod</text>
+      <text x="12" y="51" opacity="0">3200<animate attributeName="opacity" values="0;1" begin="0.4s" dur="0.3s" fill="freeze"/></text>
+      <text x="122" y="51" opacity="0">52<animate attributeName="opacity" values="0;1" begin="0.7s" dur="0.3s" fill="freeze"/></text>
+      <text x="232" y="51" opacity="0">1240<animate attributeName="opacity" values="0;1" begin="1.0s" dur="0.3s" fill="freeze"/></text>
+      <text x="12" y="81" opacity="0">3185<animate attributeName="opacity" values="0;1" begin="1.3s" dur="0.3s" fill="freeze"/></text>
+      <text x="122" y="81" opacity="0">54<animate attributeName="opacity" values="0;1" begin="1.6s" dur="0.3s" fill="freeze"/></text>
+      <text x="232" y="81" opacity="0">1310<animate attributeName="opacity" values="0;1" begin="1.9s" dur="0.3s" fill="freeze"/></text>
+      <text x="12" y="111" font-weight="bold" fill="#fde68a" opacity="0">=SUM(C2:C3)<animate attributeName="opacity" values="0;1" begin="2.4s" dur="0.4s" fill="freeze"/></text>
+      <text x="232" y="111" font-weight="bold" fill="#fde68a" opacity="0">2550<animate attributeName="opacity" values="0;1" begin="3.1s" dur="0.4s" fill="freeze"/></text>
+    </g>
+    <!-- active cell highlight pulsing -->
+    <rect x="0" y="90" width="330" height="30" fill="none" stroke="#fde68a" stroke-width="2" rx="2">
+      <animate attributeName="opacity" values="1;0.35;1" dur="2.2s" repeatCount="indefinite"/>
+    </rect>
+  </g>
+
+  <!-- title -->
+  <g transform="translate(420,78)" fill="#ffffff">
+    <text font-size="42" font-weight="bold" font-family="system-ui, sans-serif">AI_Office</text>
+    <text y="34" font-size="16" fill="#dbeafe" font-family="system-ui, sans-serif">An office suite built from scratch — to learn how the</text>
+    <text y="56" font-size="16" fill="#dbeafe" font-family="system-ui, sans-serif">world's most-used software actually works inside.</text>
+    <g transform="translate(0,86)" font-size="13" font-family="system-ui, sans-serif">
+      <rect x="-8" y="-16" width="122" height="24" rx="12" fill="#ffffff22"/>
+      <text fill="#ffffff">📊 Sheets · 73 fx</text>
+      <rect x="126" y="-16" width="96" height="24" rx="12" fill="#ffffff22"/>
+      <text x="134" fill="#ffffff">📝 Docs · .docx</text>
+      <rect x="234" y="-16" width="104" height="24" rx="12" fill="#ffffff22"/>
+      <text x="242" fill="#ffffff">🎞️ Slides · PDF</text>
+    </g>
+  </g>
+
+  <!-- footer stats -->
+  <text x="450" y="204" text-anchor="middle" font-size="13" fill="#bfdbfe" font-family="system-ui, sans-serif">
+    259 unit tests · 20 E2E tests · 13 bugs found &amp; fixed · every phase audited — see BUGLOG.md
+  </text>
+</svg>
