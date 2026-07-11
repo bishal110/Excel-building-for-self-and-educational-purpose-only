@@ -16,16 +16,26 @@ export function SheetsWorkspace() {
   const [modal, setModal] = useState<Modal>(null);
 
   useEffect(() => {
-    const isEditableTarget = (t: EventTarget | null) => {
+    const targetOwnsKey = (t: EventTarget | null, e: KeyboardEvent) => {
       const el = t as HTMLElement | null;
       if (!el) return false;
       const tag = el.tagName;
-      return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+      // Form fields and editable regions own every key.
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable) {
+        return true;
+      }
+      // Buttons/links own only their activation keys, so a keyboard user can
+      // press Enter on a focused toolbar button — while Ctrl+Z etc. still
+      // reaches the grid after a mouse click leaves focus on the button.
+      if (tag === 'BUTTON' || tag === 'A') {
+        return e.key === 'Enter' || e.key === ' ';
+      }
+      return false;
     };
 
     const onKeyDown = (e: KeyboardEvent) => {
       if (modal) return;
-      if (store.editing || isEditableTarget(e.target)) return;
+      if (store.editing || targetOwnsKey(e.target, e)) return;
 
       // Documented shortcuts (shared with the Help panel via SHORTCUTS/KEYBINDINGS).
       if (dispatchShortcut(e)) {

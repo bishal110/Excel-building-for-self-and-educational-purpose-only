@@ -72,15 +72,16 @@ npm run lint      # type-check with the TypeScript compiler
 npm run e2e       # end-to-end browser tests (Playwright)
 ```
 
-- **253 unit tests** cover the formula engine, grid operations, CSV/XLSX, the
-  document model, the slide deck, the whole-suite project format, and the app
-  store (including a feature-by-feature audit, the Help↔keybinding audit, and
-  safety edge cases).
-- **Playwright E2E (17 tests)** cover the Sheets flow (edit → formula → insert row →
+- **259 unit tests** cover the formula engine, grid operations, CSV/XLSX, the
+  document model, the slide deck, the whole-suite project format, 10k-cell
+  performance, and the app store (including a feature-by-feature audit, the
+  Help↔keybinding audit, and stale-state edge cases).
+- **Playwright E2E (20 tests)** cover the Sheets flow (edit → formula → insert row →
   undo → export, freeze, macros, help), the Docs flow (type → format → insert
   table → export `.docx`), the Slides flow (create → reorder → present → exit),
-  the File menu (save/new), a **responsive audit** at 360/768/1366px, and three
-  click-through **audits** that fail on any uncaught runtime error.
+  the File menu (save/new), a **keyboard-only accessibility** walkthrough, a
+  **responsive audit** at 360/768/1366px, and three click-through **audits**
+  that fail on any uncaught runtime error.
 - `npm run build` runs the **Help↔keybinding audit** and fails if the in-app Help
   ever advertises a shortcut the handler doesn't implement (or vice-versa).
 
@@ -150,8 +151,10 @@ This project is being built in phases:
 - ✅ **Phase 3** — Document editor
 - ✅ **Phase 4** — Presentation editor
 - ✅ **Phase 5** — App shell, in-app help, persistence
-- ✅ **Phase 6** — Packaging: LAN serve, single-file HTML, PWA, Electron config (this release)
-- ⬜ **Phase 7** — Adversarial audit & polish
+- ✅ **Phase 6** — Packaging: LAN serve, single-file HTML, PWA, Electron config
+- ✅ **Phase 7** — Adversarial audit & polish — see [`docs/PHASE7_REPORT.md`](./docs/PHASE7_REPORT.md)
+
+**All seven phases are complete.** Remaining ideas live in `KNOWN_LIMITS.md`.
 
 See [`KNOWN_LIMITS.md`](./KNOWN_LIMITS.md) for what is intentionally out of scope,
 and [`BUGLOG.md`](./BUGLOG.md) for the running record of bugs found and fixed.

@@ -2,9 +2,34 @@ import { CYCLE, CellError, VALUE } from '../formula/errors';
 import type { Node } from '../formula/ast';
 import { parseFormula } from '../formula/parser';
 import { evaluate, type EvalContext } from '../formula/evaluator';
-import { cellKey, parseCellRef } from '../formula/references';
+import { cellKey, expandRange, parseCellRef } from '../formula/references';
 import { CellValue } from '../formula/values';
 import { isFormula, parseLiteral } from './cell';
+
+/** Collect every cell coordinate an AST statically references. */
+function extractRefs(node: Node, out: Array<{ col: number; row: number }>): void {
+  switch (node.kind) {
+    case 'ref':
+      out.push({ col: node.ref.col, row: node.ref.row });
+      break;
+    case 'range':
+      for (const c of expandRange({ start: node.start, end: node.end })) out.push(c);
+      break;
+    case 'call':
+      for (const a of node.args) extractRefs(a, out);
+      break;
+    case 'unary':
+    case 'postfix':
+      extractRefs(node.operand, out);
+      break;
+    case 'binary':
+      extractRefs(node.left, out);
+      extractRefs(node.right, out);
+      break;
+    default:
+      break;
+  }
+}
 
 /**
  * A spreadsheet with formula evaluation, memoized recalculation, and cycle
@@ -53,7 +78,7 @@ export class Sheet {
   }
 
   getValue(col: number, row: number): CellValue {
-    return this.evalCell(col, row, new Set());
+    return this.computeCell(col, row);
   }
 
   /** Set a cell by A1 string, e.g. sheet.setA1('A1', '=B1+1'). */
@@ -70,40 +95,111 @@ export class Sheet {
     return this.getValue(r.col, r.row);
   }
 
-  /** Convenience: value by A1 string, e.g. sheet.get('A1'). */
-  private evalCell(col: number, row: number, stack: Set<string>): CellValue {
-    const key = cellKey(col, row);
+  /**
+   * Resolve a cell's value if it needs no dependency ordering: cached values,
+   * empty cells, and literals. Returns undefined for an uncomputed formula.
+   */
+  private quickValue(key: string): CellValue | undefined {
     if (this.valueCache.has(key)) return this.valueCache.get(key)!;
-    if (stack.has(key)) return CYCLE;
-
     const raw = this.cells.get(key);
     if (raw === undefined || raw === '') return null;
-
     if (!isFormula(raw)) {
       const v = parseLiteral(raw);
       this.valueCache.set(key, v);
       return v;
     }
+    return undefined;
+  }
 
-    stack.add(key);
-    let value: CellValue;
-    try {
-      const ast = this.getAst(raw);
+  /**
+   * Iterative (explicit-stack) topological evaluation. Formula dependencies
+   * are computed before their dependents, so arbitrarily deep chains (e.g. a
+   * running-total column thousands of rows long) evaluate without recursion
+   * and cannot overflow the JS call stack. Back-edges mark cycles as #CYCLE!.
+   */
+  private computeCell(col: number, row: number): CellValue {
+    const rootKey = cellKey(col, row);
+    const quick = this.quickValue(rootKey);
+    if (quick !== undefined) return quick;
+
+    interface Frame {
+      key: string;
+      raw: string;
+      expanded: boolean;
+    }
+    const stack: Frame[] = [
+      { key: rootKey, raw: this.cells.get(rootKey)!, expanded: false },
+    ];
+    const inPath = new Set<string>([rootKey]);
+
+    while (stack.length > 0) {
+      const top = stack[stack.length - 1]!;
+      if (this.valueCache.has(top.key)) {
+        inPath.delete(top.key);
+        stack.pop();
+        continue;
+      }
+
+      const ast = this.getAst(top.raw);
       if (ast instanceof CellError) {
-        value = ast;
-      } else {
+        this.valueCache.set(top.key, ast);
+        inPath.delete(top.key);
+        stack.pop();
+        continue;
+      }
+
+      if (!top.expanded) {
+        top.expanded = true;
+        const refs: Array<{ col: number; row: number }> = [];
+        extractRefs(ast, refs);
+        let pushed = false;
+        for (const r of refs) {
+          const k = cellKey(r.col, r.row);
+          if (this.valueCache.has(k)) continue;
+          const raw = this.cells.get(k);
+          if (raw === undefined || raw === '') continue; // empty → null on read
+          if (!isFormula(raw)) {
+            this.valueCache.set(k, parseLiteral(raw));
+            continue;
+          }
+          if (inPath.has(k)) {
+            // Back-edge: this dependency is somewhere up the current chain.
+            this.valueCache.set(k, CYCLE);
+            continue;
+          }
+          stack.push({ key: k, raw, expanded: false });
+          inPath.add(k);
+          pushed = true;
+        }
+        if (pushed) continue; // compute dependencies first
+      }
+
+      // All static dependencies are cached — evaluation cannot recurse deeply.
+      let value: CellValue;
+      try {
         const ctx: EvalContext = {
-          getValue: (c, r) => this.evalCell(c, r, stack),
+          getValue: (c, r) => this.cachedRead(c, r),
         };
         value = evaluate(ast, ctx);
+      } catch {
+        value = VALUE;
       }
-    } catch {
-      value = VALUE;
-    } finally {
-      stack.delete(key);
+      this.valueCache.set(top.key, value);
+      inPath.delete(top.key);
+      stack.pop();
     }
-    this.valueCache.set(key, value);
-    return value;
+
+    return this.valueCache.get(rootKey) ?? null;
+  }
+
+  /** Read for the evaluator: everything is cached or a literal by eval time. */
+  private cachedRead(col: number, row: number): CellValue {
+    const key = cellKey(col, row);
+    const v = this.quickValue(key);
+    if (v !== undefined) return v;
+    // An uncached formula here means a dependency the static walk couldn't
+    // order (only possible in a cycle) — treat it as such.
+    return CYCLE;
   }
 
   private getAst(raw: string): Node | CellError {

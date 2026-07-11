@@ -146,3 +146,47 @@ No product bugs found. Notable safety additions:
   `AI_Office.html` over `file://` (formula `=21*2` → 42, all modules render,
   zero page errors), and the PWA (manifest valid, service worker `activated`,
   offline reload + formula evaluation with the network off).
+
+## Phase 7 — Adversarial audit
+
+Clean-checkout rerun (fresh clone → install → 253 unit + 17 E2E + both builds)
+passed before any new work. The stale-state hunt and keyboard-only walkthrough
+then found three real bugs — all fixed with regression tests:
+
+### BUG-011 — Deep formula chains crashed to `#VALUE!` (stack overflow)
+- **Symptom**: A 1,000-row running-total column (`A2=A1+1`, filled down)
+  returned `#VALUE!` instead of the value — exactly the shape of daily
+  well-data cumulative columns.
+- **Root cause**: The evaluator recursed once per dependency link
+  (`evalCell → evaluate → getValue → evalCell…`), overflowing the JS call
+  stack; the catch-all converted the `RangeError` into `#VALUE!`.
+- **Fix**: Rewrote `Sheet` evaluation as an iterative, explicit-stack
+  topological pass: static dependencies are extracted from the AST and computed
+  before their dependents, so chain depth no longer consumes call-stack frames.
+  Cycles are detected as back-edges (`#CYCLE!` semantics unchanged).
+- **Test**: `phase7.audit.test.ts` → "recalculates a 1,000-cell formula chain";
+  all 259 existing tests (cycles, lazy IF, error propagation) still pass.
+
+### BUG-012 — Focused toolbar buttons couldn't be activated by keyboard
+- **Symptom**: Tab/focus onto any Sheets toolbar button, press Enter — the grid
+  moved the active cell instead of clicking the button. Keyboard-only users
+  could not operate the toolbar.
+- **Root cause**: The global key handler only exempted INPUT/TEXTAREA/SELECT,
+  so it hijacked Enter/Space from focused buttons and links.
+- **Fix**: Buttons/links now own their activation keys (Enter, Space) while
+  other keys (Ctrl+Z after a mouse click, arrows) still reach the grid.
+- **Test**: `accessibility.spec.ts` → "modals are keyboard-dismissable…".
+
+### BUG-013 — Type-to-edit silently dropped the first character
+- **Symptom**: With a cell selected, typing `=A1*8` produced the text `A1*8` —
+  the leading `=` vanished, turning a formula into a string with no error.
+- **Root cause**: The cell editor `select()`ed its initial content on mount, so
+  the second keystroke replaced the just-typed first character.
+- **Fix**: Type-to-edit now places the caret at the end; select-all-on-open is
+  kept for F2/double-click (where overwrite is the expected behaviour).
+- **Test**: `accessibility.spec.ts` → "keyboard-only: navigate, type, formula…".
+
+Also added: a visible `:focus-visible` indicator on the grid container,
+10k-cell fill + `SUM` performance test (both well under their ceilings), undo
+across sheet switches, per-sheet formula isolation, and cross-viewport
+screenshots at 360/768/1366 px (0 px horizontal overflow at all three).

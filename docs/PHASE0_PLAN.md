@@ -1,11 +1,10 @@
 # AI_Office — Phase 0: Goal & Plan
 
-> Status: **Phases 0–6 complete** — plan, engine, Sheets UI, Docs editor,
-> Slides editor, app shell, and packaging (dist/ + LAN serve, single-file
-> `AI_Office.html`, PWA with offline service worker, Electron config +
-> `BUILD_ON_WINDOWS.md`). The engine lives at the repository root
+> Status: **ALL PHASES (0–7) COMPLETE.** Plan, engine, Sheets UI, Docs editor,
+> Slides editor, app shell, packaging, and the final adversarial audit
+> (`docs/PHASE7_REPORT.md`). The engine lives at the repository root
 > (`src/engine`), the app under `src/ui` (`sheets/`, `docs/`, `slides/`,
-> `shell/`), with `BUGLOG.md` and `KNOWN_LIMITS.md`. Remaining: Phase 7 audit.
+> `shell/`), with `BUGLOG.md` (13 bugs logged, 0 open) and `KNOWN_LIMITS.md`.
 > No application code is written in *this* Phase-0 document; the plan below
 > stands as the reference architecture.
 >

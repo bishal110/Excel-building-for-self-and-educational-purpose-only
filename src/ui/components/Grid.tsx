@@ -183,8 +183,18 @@ function CellEditor({ col, row }: { col: number; row: number }) {
   );
   const ref = useRef<HTMLInputElement>(null);
   useEffect(() => {
-    ref.current?.focus();
-    ref.current?.select();
+    const el = ref.current;
+    if (!el) return;
+    el.focus();
+    if (store.editInitial !== null) {
+      // Type-to-edit: keep typing after the first character — do NOT select
+      // it, or the next keystroke would replace it (e.g. "=A1" losing "=").
+      const end = el.value.length;
+      el.setSelectionRange(end, end);
+    } else {
+      // F2 / double-click: select existing content for quick overwrite.
+      el.select();
+    }
   }, []);
   const commit = (dRow: number, dCol: number) => {
     store.commitCell(col, row, value);
