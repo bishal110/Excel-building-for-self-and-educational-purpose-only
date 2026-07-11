@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
@@ -56,6 +57,17 @@ export function DocsView() {
       }
     },
   });
+
+  // Reload content when a whole-suite project is opened or reset.
+  useEffect(() => {
+    if (!editor) return;
+    const onLoaded = (e: Event) => {
+      const html = (e as CustomEvent<string>).detail ?? DEFAULT_DOC;
+      editor.commands.setContent(html || DEFAULT_DOC);
+    };
+    window.addEventListener('aioffice:doc-loaded', onLoaded);
+    return () => window.removeEventListener('aioffice:doc-loaded', onLoaded);
+  }, [editor]);
 
   if (!editor) return <div className="doc-loading">Loading editor…</div>;
 

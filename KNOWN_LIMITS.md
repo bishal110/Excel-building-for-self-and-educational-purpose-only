@@ -35,7 +35,6 @@ no feature parity is claimed. Items are moved here rather than silently dropped.
 
 ## Not started yet (planned by phase)
 
-- Shell, help audit, autosave/persistence hardening — Phase 5.
 - Packaging (single-file HTML, PWA, Electron) — Phase 6.
 
 ## Sheets UI (Phase 2) — current limitations
@@ -88,3 +87,16 @@ no feature parity is claimed. Items are moved here rather than silently dropped.
   slide-to-slide advance.
 - **Speaker notes** are stored and editable but are not shown in a separate
   presenter view during present mode.
+
+## App shell & persistence (Phase 5) — current limitations
+
+- **One autosave slot per module.** Autosave and the `.aioffice` project file
+  hold a single workbook + document + deck; there is no multi-file/document
+  manager or recent-files list.
+- **`.aioffice` bundles the document as HTML**, not the ProseMirror JSON, so a
+  round-trip preserves the visible content but not every editor-internal detail.
+- **File menu is intentionally minimal** — New / Open / Save. There is no
+  per-module "export" inside the File menu (module exports live in each toolbar).
+- **Responsive down to 360px, not a dedicated mobile UI.** Layouts reflow and
+  avoid horizontal overflow, but the grid and editors are still designed for a
+  pointer + keyboard; touch gestures are not specially handled.

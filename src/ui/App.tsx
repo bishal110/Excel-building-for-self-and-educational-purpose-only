@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { SheetsWorkspace } from './sheets/SheetsWorkspace';
 import { DocsView } from './docs/DocsView';
 import { SlidesView } from './slides/SlidesView';
+import { FileMenu } from './shell/FileMenu';
 
 type Module = 'sheets' | 'docs' | 'slides';
 
@@ -12,6 +13,7 @@ export function App() {
     <div className="app">
       <header className="app-header">
         <div className="brand">AI_Office</div>
+        <FileMenu />
         <nav className="module-nav" data-testid="module-nav">
           <button
             className={module === 'sheets' ? 'active' : ''}

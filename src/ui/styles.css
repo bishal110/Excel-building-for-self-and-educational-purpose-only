@@ -36,7 +36,44 @@ body { color: var(--text); background: var(--bg); font-size: 13px; }
 }
 .brand { font-weight: 700; letter-spacing: 0.3px; }
 .brand-sub { font-weight: 400; opacity: 0.85; margin-left: 4px; }
-.module-nav { display: flex; gap: 4px; margin-left: 20px; }
+.file-menu { position: relative; margin-left: 16px; }
+.file-btn {
+  border: none;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  padding: 4px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 13px;
+}
+.file-btn:hover { background: rgba(255, 255, 255, 0.28); }
+.file-dropdown {
+  position: absolute;
+  top: 110%;
+  left: 0;
+  background: #fff;
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.2);
+  z-index: 60;
+  min-width: 200px;
+  padding: 4px;
+}
+.file-dropdown button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: none;
+  padding: 8px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text);
+}
+.file-dropdown button:hover { background: var(--accent-soft); }
+.module-nav { display: flex; gap: 4px; margin-left: 16px; }
 .module-nav button {
   border: none;
   background: rgba(255, 255, 255, 0.15);

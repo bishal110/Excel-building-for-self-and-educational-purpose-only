@@ -27,7 +27,8 @@ intentional limitation is written down in [`KNOWN_LIMITS.md`](./KNOWN_LIMITS.md)
 | **Macros** | JavaScript, Office-Scripts style, with a documented `sheet` API — **never** VBA. See [`docs/MACRO_API.md`](./docs/MACRO_API.md). |
 | **Documents** | Rich-text editor (TipTap) with a ribbon — styles/headings, font, bold/italic/underline, lists, alignment, insert table/image/link — a page-styled canvas, live word count, and **export to `.docx`** plus print-to-PDF. |
 | **Presentations** | Slide deck editor — title/body/image layouts, four themes, **drag-to-reorder** slide list, speaker notes, **full-screen present mode** with keyboard nav, and export the deck to PDF. |
-| **Persistence** | Autosaves the workbook, the document, and the slide deck to the browser (localStorage) and restores on reload. |
+| **App shell** | A **File menu** (New / Open / Save whole-suite `.aioffice` project) plus contextual module tabs. In-app Help lists only shortcuts that actually work — a **build-time audit fails the build** if Help and the key handler diverge. Responsive down to 360px. |
+| **Persistence** | Autosaves the workbook, the document, and the slide deck to the browser (localStorage); one `.aioffice` file saves/opens all three modules together. |
 
 ---
 
@@ -72,14 +73,17 @@ npm run lint      # type-check with the TypeScript compiler
 npm run e2e       # end-to-end browser tests (Playwright)
 ```
 
-- **246 unit tests** cover the formula engine, grid operations, CSV/XLSX, the
-  document model, the slide deck, and the app store (including a feature-by-feature
-  audit and safety edge cases).
-- **Playwright E2E (13 tests)** cover the Sheets flow (edit → formula → insert row →
+- **253 unit tests** cover the formula engine, grid operations, CSV/XLSX, the
+  document model, the slide deck, the whole-suite project format, and the app
+  store (including a feature-by-feature audit, the Help↔keybinding audit, and
+  safety edge cases).
+- **Playwright E2E (17 tests)** cover the Sheets flow (edit → formula → insert row →
   undo → export, freeze, macros, help), the Docs flow (type → format → insert
-  table → export `.docx`), the Slides flow (create → reorder → present → exit), and
-  three click-through **audits** that fail on any uncaught runtime error across
-  every Sheets, Docs, and Slides control.
+  table → export `.docx`), the Slides flow (create → reorder → present → exit),
+  the File menu (save/new), a **responsive audit** at 360/768/1366px, and three
+  click-through **audits** that fail on any uncaught runtime error.
+- `npm run build` runs the **Help↔keybinding audit** and fails if the in-app Help
+  ever advertises a shortcut the handler doesn't implement (or vice-versa).
 
 > First-time E2E users may need browsers: `npm run e2e:install`.
 
@@ -100,7 +104,9 @@ src/
     ├── components/         #   Grid, Toolbar, FormulaBar, tabs, modals
     ├── sheets/             #   Sheets workspace (keyboard, wiring)
     ├── docs/               #   Docs editor (TipTap) + ribbon
-    └── slides/             #   Slides deck editor + present mode
+    ├── slides/             #   Slides deck editor + present mode
+    ├── shell/              #   File menu (whole-suite New/Open/Save)
+    └── keybindings.ts      #   shortcut registry (Help + build audit)
 e2e/                        # Playwright end-to-end tests
 docs/                       # Architecture plan and macro API reference
 ```
@@ -140,8 +146,8 @@ This project is being built in phases:
 - ✅ **Phase 1** — Spreadsheet engine (formula / grid / macro)
 - ✅ **Phase 2** — Sheets UI
 - ✅ **Phase 3** — Document editor
-- ✅ **Phase 4** — Presentation editor (this release)
-- ⬜ **Phase 5** — App shell, in-app help, persistence
+- ✅ **Phase 4** — Presentation editor
+- ✅ **Phase 5** — App shell, in-app help, persistence (this release)
 - ⬜ **Phase 6** — Packaging (single-file HTML, PWA, desktop)
 - ⬜ **Phase 7** — Adversarial audit & polish
 

@@ -113,3 +113,15 @@ No product bugs found during the build. The slide deck store has 9 unit tests
 present → exit, layout/theme, delete-keeps-one), and a click-through audit that
 exercises every slide control (layouts, themes, present, export, reorder) with
 zero uncaught runtime errors.
+
+## Phase 5 — Shell, Help audit & persistence
+
+No product bugs found. Notable safety additions:
+- The Sheets key handler was refactored to share one source of truth (`SHORTCUTS`)
+  with the Help panel's registry (`KEYBINDINGS`). A new audit test
+  (`keybindings.audit.test.ts`) — wired into `npm run build` — **fails the build**
+  if Help and the handler diverge, satisfying the Phase-5 requirement that Help
+  list ONLY implemented shortcuts.
+- Whole-suite `.aioffice` save/open is covered by a round-trip unit test.
+- A responsive E2E audit asserts no horizontal page overflow at 360/768/1366px
+  across all three modules; the existing layout passed with no changes needed.

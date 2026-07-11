@@ -25,7 +25,7 @@ function makeSlide(id: string, layout: SlideLayout = 'titleBody'): Slide {
   };
 }
 
-interface DeckState {
+export interface DeckState {
   slides: Slide[];
   activeId: string;
   theme: Theme;
@@ -141,6 +141,23 @@ export class SlidesStore {
 
   setTheme(theme: Theme) {
     this.themeVal = theme;
+    this.emit();
+  }
+
+  /** Serialize the deck (for whole-suite .aioffice save). */
+  exportDeck(): DeckState {
+    return { slides: this.slidesArr, activeId: this.activeId, theme: this.themeVal };
+  }
+
+  /** Replace the deck from a saved state (for whole-suite .aioffice open). */
+  loadDeck(state: DeckState) {
+    if (!state || !Array.isArray(state.slides) || state.slides.length === 0) return;
+    this.slidesArr = state.slides;
+    this.activeId = state.slides.some((s) => s.id === state.activeId)
+      ? state.activeId
+      : state.slides[0]!.id;
+    this.themeVal = state.theme ?? 'light';
+    this.nextId = this.slidesArr.length + 1;
     this.emit();
   }
 
