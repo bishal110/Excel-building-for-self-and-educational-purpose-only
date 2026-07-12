@@ -60,6 +60,7 @@ test('active cell has a visible indicator and follows arrow keys', async ({ page
 
 test('modals are keyboard-dismissable and buttons focusable', async ({ page }) => {
   // Open Help via the toolbar with keyboard activation (Enter on focused button).
+  await page.getByTestId('ribbon-tab-view').click(); // Help lives on the View tab
   await page.getByTestId('open-help').focus();
   await page.keyboard.press('Enter');
   await expect(page.getByTestId('help-grid')).toBeVisible();

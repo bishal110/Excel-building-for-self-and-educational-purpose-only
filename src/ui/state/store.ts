@@ -7,6 +7,7 @@ import {
 import { PRESETS } from '../../engine/format/numberFormat';
 import { insertRows, deleteRows, insertCols, deleteCols } from '../../engine/grid/mutations';
 import { findReplace, sortRange } from '../../engine/grid/ops';
+import { pivotGrid, type PivotConfig } from '../../engine/grid/pivot';
 import { runMacro } from '../../engine/macro/runtime';
 import { numberToCol } from '../../engine/formula/references';
 import { CellValue } from '../../engine/formula/values';
@@ -471,6 +472,48 @@ export class Store {
     });
     return changed;
   }
+  /** Header labels of the current selection's first row (for pivot fields). */
+  selectionHeaders(): string[] {
+    const b = selectionBox(this.selection);
+    const out: string[] = [];
+    for (let c = b.c1; c <= b.c2; c++) {
+      const v = this.getValue(c, b.r1);
+      out.push(v === null || v === '' ? numberToCol(c) : String(v));
+    }
+    return out;
+  }
+
+  /** Build a pivot table from the selection into a new sheet; returns its name. */
+  createPivotSheet(cfg: PivotConfig): string {
+    const b = selectionBox(this.selection);
+    const data: import('../../engine/formula/values').CellValue[][] = [];
+    for (let r = b.r1; r <= b.r2; r++) {
+      const row: import('../../engine/formula/values').CellValue[] = [];
+      for (let c = b.c1; c <= b.c2; c++) row.push(this.getValue(c, r));
+      data.push(row);
+    }
+    const grid = pivotGrid(data, cfg);
+
+    let name = '';
+    this.mutate(() => {
+      let i = 1;
+      while (this.wb.sheetByName(`Pivot${i}`)) i++;
+      name = `Pivot${i}`;
+      const sheet = this.wb.addSheet(name);
+      const meta = emptyMeta();
+      grid.forEach((row, r) => {
+        row.forEach((v, c) => {
+          if (v !== '') sheet.setRaw(c, r, v);
+          if (r === 0 || c === 0) meta.styles.set(`${c},${r}`, { bold: true });
+        });
+      });
+      this.metas.push(meta);
+      this.wb.activeIndex = this.wb.sheetCount - 1;
+      this.clampSelection();
+    });
+    return name;
+  }
+
   runMacroCode(code: string): { logs: string[]; error?: string } {
     let result: { logs: string[]; error?: string } = { logs: [] };
     this.mutate(() => {

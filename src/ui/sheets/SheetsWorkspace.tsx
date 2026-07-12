@@ -1,16 +1,17 @@
 import { useEffect, useState } from 'react';
 import { store } from '../state/store';
 import { dispatchShortcut } from './shortcuts';
-import { Toolbar } from '../components/Toolbar';
+import { SheetsRibbon } from '../components/SheetsRibbon';
 import { FormulaBar } from '../components/FormulaBar';
 import { Grid } from '../components/Grid';
 import { SheetTabs } from '../components/SheetTabs';
 import { StatusBar } from '../components/StatusBar';
 import { MacroEditor } from '../components/MacroEditor';
 import { ChartBuilder } from '../components/ChartBuilder';
+import { PivotBuilder } from '../components/PivotBuilder';
 import { HelpPanel } from '../components/HelpPanel';
 
-type Modal = 'macro' | 'chart' | 'help' | null;
+type Modal = 'macro' | 'chart' | 'pivot' | 'help' | null;
 
 export function SheetsWorkspace() {
   const [modal, setModal] = useState<Modal>(null);
@@ -65,9 +66,10 @@ export function SheetsWorkspace() {
 
   return (
     <>
-      <Toolbar
+      <SheetsRibbon
         onOpenMacro={() => setModal('macro')}
         onOpenChart={() => setModal('chart')}
+        onOpenPivot={() => setModal('pivot')}
         onOpenHelp={() => setModal('help')}
       />
       <FormulaBar />
@@ -76,6 +78,7 @@ export function SheetsWorkspace() {
       <StatusBar />
       {modal === 'macro' && <MacroEditor onClose={() => setModal(null)} />}
       {modal === 'chart' && <ChartBuilder onClose={() => setModal(null)} />}
+      {modal === 'pivot' && <PivotBuilder onClose={() => setModal(null)} />}
       {modal === 'help' && <HelpPanel onClose={() => setModal(null)} />}
     </>
   );

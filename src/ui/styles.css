@@ -73,6 +73,93 @@ body { color: var(--text); background: var(--bg); font-size: 13px; }
   color: var(--text);
 }
 .file-dropdown button:hover { background: var(--accent-soft); }
+.file-dropdown button:disabled { opacity: 0.4; cursor: default; }
+.file-submenu-parent { position: relative; }
+.file-submenu {
+  position: absolute;
+  left: 100%;
+  top: 0;
+  min-width: 220px;
+  background: #fff;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.2);
+  padding: 4px;
+}
+.file-submenu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: none;
+  padding: 8px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text);
+}
+.file-submenu button:hover:not(:disabled) { background: var(--accent-soft); }
+.file-submenu button:disabled { opacity: 0.4; cursor: default; }
+
+/* ---- Excel-style ribbon ---- */
+.ribbon { background: var(--panel); border-bottom: 1px solid var(--border); }
+.ribbon-tabs { display: flex; gap: 2px; padding: 4px 8px 0; }
+.ribbon-tab {
+  border: none;
+  background: transparent;
+  padding: 5px 16px;
+  border-radius: 6px 6px 0 0;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--muted);
+}
+.ribbon-tab:hover { background: #fff; }
+.ribbon-tab.active { background: #fff; color: var(--accent); font-weight: 600; box-shadow: 0 -1px 0 var(--border) inset; }
+.ribbon-body {
+  display: flex;
+  gap: 2px;
+  align-items: stretch;
+  padding: 6px 8px;
+  background: #fff;
+  border-top: 1px solid var(--border);
+  overflow-x: auto;
+}
+.ribbon-group {
+  display: flex;
+  flex-direction: column;
+  padding: 0 8px;
+  border-right: 1px solid var(--border);
+}
+.ribbon-group:last-child { border-right: none; }
+.ribbon-group-btns { display: flex; gap: 2px; align-items: center; flex: 1; flex-wrap: wrap; }
+.ribbon-group-label { text-align: center; font-size: 10px; color: var(--muted); padding-top: 3px; }
+.ribbon-body button, .ribbon-body select {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text);
+  border-radius: 5px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 12px;
+}
+.ribbon-body button:hover:not(:disabled) { background: var(--accent-soft); border-color: var(--border-strong); }
+.ribbon-body button:disabled { opacity: 0.4; cursor: default; }
+.ribbon-body select { border: 1px solid var(--border-strong); background: #fff; }
+.ribbon-body .big-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 12px;
+  font-size: 11px;
+}
+.big-icon { font-size: 20px; line-height: 1; }
+
+/* PivotTable modal fields */
+.pivot-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 10px 0; }
+.pivot-fields label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
+.pivot-fields select { border: 1px solid var(--border-strong); border-radius: 5px; padding: 6px 8px; font: inherit; font-size: 13px; }
+
 .module-nav { display: flex; gap: 4px; margin-left: 16px; }
 .module-nav button {
   border: none;

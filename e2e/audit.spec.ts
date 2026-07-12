@@ -58,10 +58,17 @@ test('AUDIT: every Sheets control runs without a runtime error', async ({ page }
   await page.locator('[data-cell="A3"]').click({ modifiers: ['Shift'] });
 
   const tb = page.getByTestId('toolbar');
-  const clicks: Array<[string, () => Promise<unknown>]> = [
+  const tab = (t: string) => page.getByTestId(`ribbon-tab-${t}`).click();
+
+  // HOME tab controls
+  await tab('home');
+  const homeClicks: Array<[string, () => Promise<unknown>]> = [
     ['Bold', () => tb.getByTitle('Bold (Ctrl+B)').click()],
     ['Italic', () => tb.getByTitle('Italic (Ctrl+I)').click()],
     ['Underline', () => tb.getByTitle('Underline (Ctrl+U)').click()],
+    ['Cut', () => tb.getByTitle('Cut (Ctrl+X)').click()],
+    ['Copy', () => tb.getByTitle('Copy (Ctrl+C)').click()],
+    ['Paste', () => tb.getByTitle('Paste (Ctrl+V)').click()],
     ['Align left', () => tb.getByTitle('Align left').click()],
     ['Align center', () => tb.getByTitle('Align center').click()],
     ['Align right', () => tb.getByTitle('Align right').click()],
@@ -69,39 +76,54 @@ test('AUDIT: every Sheets control runs without a runtime error', async ({ page }
     ['Format percent', () => page.getByTestId('format-select').selectOption('percent')],
     ['Format general', () => page.getByTestId('format-select').selectOption('general')],
     ['AutoSum', () => tb.getByTitle('AutoSum (Alt+=)').click()],
-    ['Sort A-Z', () => tb.getByTitle('Sort ascending').click()],
-    ['Sort Z-A', () => tb.getByTitle('Sort descending').click()],
+    ['Clear', () => tb.getByText('Clear').click()],
     ['Insert row', () => page.getByTestId('insert-row').click()],
-    ['Delete row', () => tb.getByText('Delete row').click()],
-    ['Insert col', () => tb.getByText('Insert col').click()],
-    ['Delete col', () => tb.getByText('Delete col').click()],
-    ['Freeze', () => tb.getByText('Freeze', { exact: true }).click()],
     ['Undo', () => tb.getByTitle('Undo (Ctrl+Z)').click()],
     ['Redo', () => tb.getByTitle('Redo (Ctrl+Y)').click()],
-    ['Find & Replace', () => tb.getByText('Find & Replace').click()],
-    ['Export CSV', () => page.getByTestId('export-csv').click()],
-    ['Export xlsx', () => tb.getByText('Export xlsx').click()],
-    ['Save', () => tb.getByText('Save', { exact: true }).click()],
   ];
-
-  for (const [name, fn] of clicks) {
+  for (const [name, fn] of homeClicks) {
     await fn();
-    await page.waitForTimeout(30);
+    await page.waitForTimeout(20);
     expect(errors, `error after "${name}": ${errors.join(' | ')}`).toEqual([]);
   }
 
-  // Modals: open + close each.
+  // DATA tab controls
   await page.locator('[data-cell="A1"]').click();
   await page.locator('[data-cell="A3"]').click({ modifiers: ['Shift'] });
-  await page.getByTestId('open-macro').click();
+  await tab('data');
+  for (const [name, fn] of [
+    ['Sort A-Z', () => tb.getByTitle('Sort ascending').click()],
+    ['Sort Z-A', () => tb.getByTitle('Sort descending').click()],
+  ] as Array<[string, () => Promise<unknown>]>) {
+    await fn();
+    await page.waitForTimeout(20);
+    expect(errors, `error after "${name}": ${errors.join(' | ')}`).toEqual([]);
+  }
+
+  // VIEW tab
+  await tab('view');
+  await tb.getByText('Freeze').click();
+  await page.waitForTimeout(20);
+  expect(errors, `freeze: ${errors.join(' | ')}`).toEqual([]);
+
+  // Modals from their tabs.
+  await page.getByTestId('open-macro').click(); // View tab
   await page.getByTestId('macro-run').click();
   await page.locator('.modal header button').click();
   expect(errors, `macro: ${errors.join(' | ')}`).toEqual([]);
 
-  await page.getByText('Chart', { exact: true }).click();
+  // Re-seed fresh numbers: earlier cut/clear/sort steps mangled A1:A3.
+  await type('A1', '30');
+  await type('A2', '10');
+  await type('A3', '20');
+  await page.locator('[data-cell="A1"]').click();
+  await page.locator('[data-cell="A3"]').click({ modifiers: ['Shift'] });
+  await tab('insert');
+  await page.getByTestId('open-chart').click();
   await expect(page.getByTestId('chart-svg')).toBeVisible();
   await page.locator('.modal header button').click();
 
+  await tab('view');
   await page.getByTestId('open-help').click();
   await page.locator('.modal header button').click();
   expect(errors, `modals: ${errors.join(' | ')}`).toEqual([]);

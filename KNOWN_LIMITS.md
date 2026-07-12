@@ -48,6 +48,12 @@ no feature parity is claimed. Items are moved here rather than silently dropped.
 - **Charts are minimal.** The chart builder renders a single line/bar series
   (inline SVG) from the first numeric column of the selection. No axes labels
   config, legends, multi-series, or export-as-image yet.
+- **PivotTables are one-shot snapshots.** The PivotTable builder groups by one
+  row field (plus an optional column field) and aggregates one value field
+  (sum/count/avg/min/max) into a **new sheet**. It is a computed snapshot, not
+  a live pivot — it does not refresh when the source data changes, and there is
+  no drag-and-drop field layout, multiple value fields, filtering, or nested
+  grouping yet.
 - **Copy/paste is in-app only.** Clipboard operations move data within the app
   (with relative-ref adjustment); they do not integrate with the OS clipboard.
 - **Formatting does not survive `.xlsx`.** Bold/italic/number-format live in the
@@ -102,8 +108,11 @@ no feature parity is claimed. Items are moved here rather than silently dropped.
   manager or recent-files list.
 - **`.aioffice` bundles the document as HTML**, not the ProseMirror JSON, so a
   round-trip preserves the visible content but not every editor-internal detail.
-- **File menu is intentionally minimal** — New / Open / Save. There is no
-  per-module "export" inside the File menu (module exports live in each toolbar).
+- **File menu carries all import/export** — New / Open / Save As. Open
+  recognizes `.aioffice`, `.xlsx`/`.xls`/`.xlsm`, and `.csv`/`.txt`/`.tsv`;
+  Save As writes `.aioffice`, `.xlsx`, or `.csv`. There are no separate
+  import/export toolbar buttons — folding them into File is deliberate. The
+  Docs/Slides Save-As formats still live in their own module ribbons.
 - **Responsive down to 360px, not a dedicated mobile UI.** Layouts reflow and
   avoid horizontal overflow, but the grid and editors are still designed for a
   pointer + keyboard; touch gestures are not specially handled.

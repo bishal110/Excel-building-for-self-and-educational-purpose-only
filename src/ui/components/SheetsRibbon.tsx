@@ -1,0 +1,168 @@
+import { useState } from 'react';
+import type { ReactNode } from 'react';
+import { PRESETS } from '../../engine/format/numberFormat';
+import { store, selectionBox } from '../state/store';
+import { useStoreVersion } from '../state/useStore';
+
+const FORMAT_OPTIONS: { key: string; label: string }[] = [
+  { key: 'general', label: 'General' },
+  { key: 'integer', label: '1,234' },
+  { key: 'number2', label: '1,234.00' },
+  { key: 'percent', label: 'Percent' },
+  { key: 'inr', label: '₹ Indian' },
+  { key: 'usd', label: '$ USD' },
+];
+
+type Tab = 'home' | 'insert' | 'data' | 'view';
+
+export function SheetsRibbon({
+  onOpenChart,
+  onOpenPivot,
+  onOpenMacro,
+  onOpenHelp,
+}: {
+  onOpenChart: () => void;
+  onOpenPivot: () => void;
+  onOpenMacro: () => void;
+  onOpenHelp: () => void;
+}) {
+  useStoreVersion();
+  const [tab, setTab] = useState<Tab>('home');
+  const box = selectionBox(store.selection);
+
+  const findReplace = () => {
+    const find = prompt('Find what?');
+    if (find === null || find === '') return;
+    const replace = prompt('Replace with?') ?? '';
+    const n = store.findReplaceAll(find, replace);
+    alert(`Replaced in ${n} cell(s).`);
+  };
+
+  return (
+    <div className="ribbon" data-testid="sheets-ribbon">
+      <div className="ribbon-tabs" role="tablist">
+        {(['home', 'insert', 'data', 'view'] as Tab[]).map((t) => (
+          <button
+            key={t}
+            role="tab"
+            data-testid={`ribbon-tab-${t}`}
+            className={'ribbon-tab' + (tab === t ? ' active' : '')}
+            onClick={() => setTab(t)}
+          >
+            {t[0]!.toUpperCase() + t.slice(1)}
+          </button>
+        ))}
+      </div>
+
+      <div className="ribbon-body" data-testid="toolbar">
+        {tab === 'home' && (
+          <>
+            <Group label="Undo">
+              <button disabled={!store.canUndo()} onClick={() => store.undo()} title="Undo (Ctrl+Z)">↶</button>
+              <button disabled={!store.canRedo()} onClick={() => store.redo()} title="Redo (Ctrl+Y)">↷</button>
+            </Group>
+            <Group label="Clipboard">
+              <button onClick={() => store.copy(true)} title="Cut (Ctrl+X)">✂</button>
+              <button onClick={() => store.copy()} title="Copy (Ctrl+C)">⧉</button>
+              <button onClick={() => store.paste()} title="Paste (Ctrl+V)">📋</button>
+            </Group>
+            <Group label="Font">
+              <button onClick={() => store.toggleStyle('bold')} title="Bold (Ctrl+B)"><b>B</b></button>
+              <button onClick={() => store.toggleStyle('italic')} title="Italic (Ctrl+I)"><i>I</i></button>
+              <button onClick={() => store.toggleStyle('underline')} title="Underline (Ctrl+U)"><u>U</u></button>
+            </Group>
+            <Group label="Alignment">
+              <button onClick={() => store.applyStyle({ align: 'left' })} title="Align left">⯇</button>
+              <button onClick={() => store.applyStyle({ align: 'center' })} title="Align center">≡</button>
+              <button onClick={() => store.applyStyle({ align: 'right' })} title="Align right">⯈</button>
+            </Group>
+            <Group label="Number">
+              <select
+                data-testid="format-select"
+                value={store.getStyle(box.c1, box.r1)?.format ?? 'general'}
+                onChange={(e) => store.setNumberFormat(e.target.value)}
+                title="Number format"
+              >
+                {FORMAT_OPTIONS.map((o) => (
+                  <option key={o.key} value={o.key} disabled={!(o.key in PRESETS) && o.key !== 'general'}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </Group>
+            <Group label="Cells">
+              <button onClick={() => store.insertRowAt(box.r1)} data-testid="insert-row">Insert row</button>
+              <button onClick={() => store.insertColAt(box.c1)}>Insert col</button>
+              <button onClick={() => store.deleteRowAt(box.r1)}>Delete row</button>
+              <button onClick={() => store.deleteColAt(box.c1)}>Delete col</button>
+            </Group>
+            <Group label="Editing">
+              <button onClick={() => store.autoSum()} title="AutoSum (Alt+=)">Σ AutoSum</button>
+              <button onClick={() => store.clearSelection()} title="Clear contents (Delete)">Clear</button>
+            </Group>
+          </>
+        )}
+
+        {tab === 'insert' && (
+          <>
+            <Group label="Tables">
+              <button className="big-btn" data-testid="open-pivot" onClick={onOpenPivot}>
+                <span className="big-icon">▦</span>PivotTable
+              </button>
+            </Group>
+            <Group label="Charts">
+              <button className="big-btn" data-testid="open-chart" onClick={onOpenChart}>
+                <span className="big-icon">📊</span>Chart
+              </button>
+            </Group>
+            <Group label="Cells">
+              <button onClick={() => store.insertRowAt(box.r1)}>Insert row</button>
+              <button onClick={() => store.insertColAt(box.c1)}>Insert col</button>
+            </Group>
+          </>
+        )}
+
+        {tab === 'data' && (
+          <>
+            <Group label="Sort & Filter">
+              <button onClick={() => store.sortSelection(true)} title="Sort ascending">A→Z</button>
+              <button onClick={() => store.sortSelection(false)} title="Sort descending">Z→A</button>
+              <button onClick={findReplace}>Find &amp; Replace</button>
+            </Group>
+            <Group label="Analysis">
+              <button className="big-btn" onClick={onOpenPivot}>
+                <span className="big-icon">▦</span>PivotTable
+              </button>
+              <button className="big-btn" onClick={onOpenChart}>
+                <span className="big-icon">📊</span>Chart
+              </button>
+            </Group>
+          </>
+        )}
+
+        {tab === 'view' && (
+          <>
+            <Group label="Window">
+              <button onClick={() => store.toggleFreeze()} title="Freeze panes">Freeze</button>
+            </Group>
+            <Group label="Automation">
+              <button data-testid="open-macro" onClick={onOpenMacro}>Macros</button>
+            </Group>
+            <Group label="Help">
+              <button data-testid="open-help" onClick={onOpenHelp}>Help</button>
+            </Group>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function Group({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="ribbon-group">
+      <div className="ribbon-group-btns">{children}</div>
+      <div className="ribbon-group-label">{label}</div>
+    </div>
+  );
+}

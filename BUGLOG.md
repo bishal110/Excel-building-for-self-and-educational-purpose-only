@@ -228,3 +228,42 @@ screenshots at 360/768/1366 px (0 px horizontal overflow at all three).
 ### NOTE — electron-builder "author is missed in package.json"
 - A cosmetic warning during `npm run dist:win-*`. Added an `author` field to
   `package.json`; the warning is gone and it populates the exe's metadata.
+
+## Excel-parity UI overhaul (post-field-report)
+
+### BUG-015 — File → Open didn't recognize Excel/CSV files from the PC
+- **Symptom (field report)**: "the open tab doesnt seem to recognise the excel
+  file in my pc." A `.xlsx` chosen in the OS dialog did nothing.
+- **Root cause**: The old Open path assumed one project format and only knew
+  how to parse `.aioffice`/JSON. A real workbook or `.csv` fell through and
+  was silently ignored.
+- **Fix**: `FileMenu.openFile()` now branches on the file extension —
+  `.aioffice`/`.json` → import the whole suite; `.xlsx`/`.xls`/`.xlsm` →
+  switch to Sheets and load via `readXlsx`; `.csv`/`.txt`/`.tsv` → switch to
+  Sheets and load via `parseCsv`. Each branch is wrapped in try/catch with a
+  clear message; an empty workbook is reported rather than opening a blank
+  grid.
+- **Test**: `e2e/sheets.spec.ts` → "import a real CSV file populates the grid"
+  now drives File → Open (not a standalone Import button).
+
+### FEATURE — PivotTable + Excel-style ribbon tabs
+- **Field report**: "i cannot find pivot table function, charts function …
+  the actual tools for data analysis are missing … include useful tabs like
+  it is there in original excel."
+- **Change**:
+  - New pure aggregation engine `src/engine/grid/pivot.ts` (`pivotGrid`) —
+    group by a row field (and optional column field), aggregate a value field
+    (sum/count/avg/min/max), with grand totals. Unit-tested
+    (`src/engine/pivot.test.ts`, 6 cases).
+  - `PivotBuilder` modal + `store.createPivotSheet()` emit the result as a
+    new bold-headed sheet.
+  - The flat toolbar is replaced by a tabbed **ribbon** (`SheetsRibbon`):
+    **Home** (font/align/number/clipboard/cells/editing), **Insert**
+    (PivotTable, Chart), **Data** (sort, find & replace, PivotTable, Chart),
+    **View** (freeze, macros, help). Chart and PivotTable are now discoverable
+    under Insert/Data instead of buried in an overloaded toolbar.
+  - The standalone Import/Export buttons are gone; those actions live in
+    File → Open and File → Save As (project / .xlsx / .csv).
+- **Test**: `e2e/sheets.spec.ts` → "PivotTable summarizes a selection into a
+  new sheet"; `e2e/audit.spec.ts` navigates every ribbon tab and clicks every
+  control with zero runtime errors.

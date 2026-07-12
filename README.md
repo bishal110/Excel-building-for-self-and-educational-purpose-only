@@ -45,14 +45,16 @@ Every intentional limitation is written down in
 | **Editing** | Full shortcut set — copy/cut/paste, undo/redo (100 steps), bold/italic/underline, select-all, AutoSum (`Alt+=`), `F2`, `Tab`/`Enter`/`Esc`/`Delete`. |
 | **Formats** | Number formats including **₹ Indian (lakh/crore)** grouping, percent, currency, thousands. |
 | **Sheets** | Multiple sheets with tabs (add / rename / delete). |
+| **Ribbon** | Excel-style tabbed ribbon — **Home** (clipboard, font, alignment, number format, cells, editing), **Insert** (PivotTable, Chart), **Data** (sort, find & replace, PivotTable, Chart), **View** (freeze, macros, help). |
 | **Data** | Sort, find & replace, insert/delete rows & columns with reference rewriting. |
-| **Import / export** | CSV (RFC-4180) and `.xlsx` (via SheetJS); save/open a whole workbook as a `.aioffice` JSON file. |
+| **PivotTable** | Summarize a selected range into a new sheet — group by a row (and optional column) field and aggregate a value field (sum / count / avg / min / max) with grand totals. |
+| **Open / Save As** | File → **Open** recognizes `.aioffice` projects, Excel `.xlsx`/`.xls`/`.xlsm`, and `.csv`/`.txt`/`.tsv` from your PC; File → **Save As** writes an `.aioffice` project, an Excel `.xlsx`, or a `.csv`. (No separate import/export buttons — it all lives in the File menu.) |
 | **Charts** | Basic line / bar chart builder from a selected range. |
 | **Macros** | JavaScript, Office-Scripts style, with a documented `sheet` API — **never** VBA. See [`docs/MACRO_API.md`](./docs/MACRO_API.md). |
 | **Documents** | Rich-text editor (TipTap) with a ribbon — styles/headings, font, bold/italic/underline, lists, alignment, insert table/image/link — a page-styled canvas, live word count, and Word-style **Save As: `.docx`, `.md`, `.html`, `.txt`** plus print-to-PDF. |
 | **Cloud (planned)** | Google Drive save/open is fully designed — least-privilege `drive.file` scope, no server of ours — see [`docs/GOOGLE_DRIVE.md`](./docs/GOOGLE_DRIVE.md); needs only a free OAuth Client ID to wire up. |
 | **Presentations** | Slide deck editor — title/body/image layouts, four themes, **drag-to-reorder** slide list, speaker notes, **full-screen present mode** with keyboard nav, and export the deck to PDF. |
-| **App shell** | A **File menu** (New / Open / Save whole-suite `.aioffice` project) plus contextual module tabs. In-app Help lists only shortcuts that actually work — a **build-time audit fails the build** if Help and the key handler diverge. Responsive down to 360px. |
+| **App shell** | A **File menu** (New / Open / Save As) plus contextual module tabs. In-app Help lists only shortcuts that actually work — a **build-time audit fails the build** if Help and the key handler diverge. Responsive down to 360px. |
 | **Persistence** | Autosaves the workbook, the document, and the slide deck to the browser (localStorage); one `.aioffice` file saves/opens all three modules together. |
 
 ---
@@ -126,7 +128,7 @@ src/
 ├── io/                     # CSV, XLSX, .docx, and .aioffice serialization
 └── ui/                     # React application
     ├── state/              #   spreadsheet store (undo/redo, selection, autosave)
-    ├── components/         #   Grid, Toolbar, FormulaBar, tabs, modals
+    ├── components/         #   Grid, SheetsRibbon, FormulaBar, tabs, modals (chart/pivot/macro/help)
     ├── sheets/             #   Sheets workspace (keyboard, wiring)
     ├── docs/               #   Docs editor (TipTap) + ribbon
     ├── slides/             #   Slides deck editor + present mode

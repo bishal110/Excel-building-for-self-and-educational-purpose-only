@@ -19,11 +19,12 @@ test('File menu: save whole-suite project and start new', async ({ page }) => {
   await ed.fill('123');
   await ed.press('Enter');
 
-  // Save project → download project.aioffice
+  // Save project → File → Save As → AI_Office project → download project.aioffice
   await page.getByTestId('file-menu').click();
+  await page.getByTestId('file-saveas').hover();
   const [download] = await Promise.all([
     page.waitForEvent('download'),
-    page.getByTestId('file-save').click(),
+    page.getByTestId('save-project').click(),
   ]);
   expect(download.suggestedFilename()).toBe('project.aioffice');
 

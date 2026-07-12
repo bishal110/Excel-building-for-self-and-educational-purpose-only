@@ -13,7 +13,7 @@ export function App() {
     <div className="app">
       <header className="app-header">
         <div className="brand">AI_Office</div>
-        <FileMenu />
+        <FileMenu module={module} onSwitchModule={setModule} />
         <nav className="module-nav" data-testid="module-nav">
           <button
             className={module === 'sheets' ? 'active' : ''}
