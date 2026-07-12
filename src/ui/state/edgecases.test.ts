@@ -77,6 +77,29 @@ describe('AUDIT: edge cases (safety)', () => {
     expect(s.getValue(0, 0)).toBe('first'); // a preserved
   });
 
+  it('opening a multi-sheet workbook creates a tab per sheet, first active', () => {
+    const s = new Store();
+    const names = s.openSheets([
+      { name: 'January', rows: [['Jan'], ['10']] },
+      { name: 'February', rows: [['Feb'], ['20']] },
+    ]);
+    expect(names).toEqual(['January', 'February']);
+    expect(s.sheetNames()).toEqual(['January', 'February']); // reused empty Sheet1
+    expect(s.activeIndex()).toBe(0); // first sheet shown
+    expect(s.getValue(0, 0)).toBe('Jan');
+    s.setActiveSheet(1);
+    expect(s.getValue(0, 1)).toBe(20);
+  });
+
+  it('duplicate sheet names within one workbook are de-duplicated', () => {
+    const s = new Store();
+    s.openSheets([
+      { name: 'Data', rows: [['a']] },
+      { name: 'Data', rows: [['b']] },
+    ]);
+    expect(s.sheetNames()).toEqual(['Data', 'Data (2)']);
+  });
+
   it('opening a file whose name collides gets a distinct sheet name', () => {
     const s = new Store();
     s.openRows([['x']], 'report.csv');

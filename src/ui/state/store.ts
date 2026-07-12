@@ -56,12 +56,16 @@ export function selectionBox(sel: Selection): RangeBox {
   };
 }
 
-/** Derive a valid, trimmed sheet name from a file name (Excel's rules: no
- *  `: \ / ? * [ ]`, non-empty, at most 31 chars). */
-export function sheetNameFromFile(fileName: string): string {
-  const stem = fileName.replace(/\.[^.]+$/, '');
-  const cleaned = stem.replace(/[:\\/?*[\]]/g, ' ').replace(/\s+/g, ' ').trim();
+/** Make a string a valid sheet name (Excel's rules: no `: \ / ? * [ ]`,
+ *  non-empty, at most 31 chars). */
+export function sanitizeSheetName(name: string): string {
+  const cleaned = name.replace(/[:\\/?*[\]]/g, ' ').replace(/\s+/g, ' ').trim();
   return (cleaned || 'Sheet').slice(0, 31);
+}
+
+/** Derive a valid sheet name from a file name (strips the extension first). */
+export function sheetNameFromFile(fileName: string): string {
+  return sanitizeSheetName(fileName.replace(/\.[^.]+$/, ''));
 }
 
 export class Store {
@@ -541,32 +545,48 @@ export class Store {
   }
 
   /**
-   * Open imported rows as a file: load them into the active sheet when it is
-   * empty (renamed after the file), otherwise into a fresh sheet named after
-   * the file. Never merges over existing cells and never discards them, so a
-   * user can open a second file without losing the first. Returns the sheet
-   * name shown.
+   * Open one or more named sheets as a file. The first sheet reuses the active
+   * sheet when it is empty (otherwise a fresh sheet); every further sheet is a
+   * fresh sheet — so a multi-tab workbook opens with all its tabs. Names are
+   * sanitized and de-duplicated. Existing sheets are never merged into or
+   * discarded, and the first opened sheet becomes active. Returns names used.
    */
-  openRows(rows: string[][], fileName: string): string {
-    let name = '';
+  openSheets(sheets: { name: string; rows: string[][] }[]): string[] {
+    const names: string[] = [];
+    if (sheets.length === 0) return names;
     this.mutate(() => {
-      const base = sheetNameFromFile(fileName);
-      const active = this.activeSheet();
-      const isEmpty = active.entries().length === 0;
-      let target = active;
-      if (isEmpty) {
-        name = this.uniqueSheetName(base, this.wb.activeIndex);
-        this.wb.renameSheet(this.wb.activeIndex, name);
-      } else {
-        name = this.uniqueSheetName(base, -1);
-        target = this.wb.addSheet(name);
-        this.metas.push(emptyMeta());
-        this.wb.activeIndex = this.wb.sheetCount - 1;
-      }
-      rows.forEach((cols, r) => cols.forEach((raw, c) => target.setRaw(c, r, raw)));
+      let firstIndex = -1;
+      sheets.forEach((sh, i) => {
+        const base = sanitizeSheetName(sh.name);
+        const active = this.activeSheet();
+        let target = active;
+        if (i === 0 && active.entries().length === 0) {
+          const name = this.uniqueSheetName(base, this.wb.activeIndex);
+          this.wb.renameSheet(this.wb.activeIndex, name);
+          names.push(name);
+          firstIndex = this.wb.activeIndex;
+        } else {
+          const name = this.uniqueSheetName(base, -1);
+          target = this.wb.addSheet(name);
+          this.metas.push(emptyMeta());
+          this.wb.activeIndex = this.wb.sheetCount - 1;
+          names.push(name);
+          if (firstIndex === -1) firstIndex = this.wb.activeIndex;
+        }
+        sh.rows.forEach((cols, r) => cols.forEach((raw, c) => target.setRaw(c, r, raw)));
+      });
+      if (firstIndex >= 0) this.wb.activeIndex = firstIndex;
       this.clampSelection();
     });
-    return name;
+    return names;
+  }
+
+  /**
+   * Open a single grid as a file (CSV/one-sheet). Thin wrapper over
+   * {@link openSheets} that names the sheet after the file. Returns the name.
+   */
+  openRows(rows: string[][], fileName: string): string {
+    return this.openSheets([{ name: sheetNameFromFile(fileName), rows }])[0] ?? '';
   }
 
   /** A sheet name unique among all sheets except the one at `exceptIndex`. */

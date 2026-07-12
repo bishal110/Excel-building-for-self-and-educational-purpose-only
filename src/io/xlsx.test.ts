@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { readXlsx, writeXlsx } from './xlsx';
+import * as XLSX from 'xlsx';
+import { readXlsx, readXlsxWorkbook, writeXlsx } from './xlsx';
 
 describe('xlsx round-trip', () => {
   it('preserves text, numbers, and formulas', async () => {
@@ -22,5 +23,18 @@ describe('xlsx round-trip', () => {
   it('handles an empty grid', () => {
     const blob = writeXlsx([['']]);
     expect(blob).toBeInstanceOf(Blob);
+  });
+
+  it('readXlsxWorkbook returns every non-empty sheet with its name', async () => {
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Jan'], ['10']]), 'January');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Feb'], ['20']]), 'February');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([[]]), 'Blank'); // dropped
+    const out = XLSX.write(wb, { type: 'array', bookType: 'xlsx' }) as ArrayBuffer;
+
+    const sheets = await readXlsxWorkbook(new Blob([out]) as unknown as File);
+    expect(sheets.map((s) => s.name)).toEqual(['January', 'February']);
+    expect(sheets[0]!.rows[0]).toEqual(['Jan']);
+    expect(sheets[1]!.rows[1]).toEqual(['20']);
   });
 });

@@ -286,3 +286,18 @@ screenshots at 360/768/1366 px (0 px horizontal overflow at all three).
 - **Test**: `src/ui/state/edgecases.test.ts` — five cases (empty-sheet reuse,
   no-merge on second open, name collision, no stale tail cells, name
   derivation). The existing "import a real CSV" E2E still passes end-to-end.
+
+### BUG-017 — opening a multi-sheet .xlsx silently dropped every tab but the first
+- **Symptom**: `readXlsx` read only `SheetNames[0]`, so opening a workbook with
+  Jan/Feb/Mar tabs loaded Jan and silently discarded the rest — surprising and
+  data-losing for anyone opening a real multi-sheet spreadsheet.
+- **Fix**: New `readXlsxWorkbook()` reads **every** non-empty worksheet with
+  its name; `store.openSheets()` opens each as its own tab (first reuses an
+  empty active sheet, the rest are fresh), sanitizing and de-duplicating names,
+  with the first sheet active. `openRows` is now a one-sheet wrapper over it.
+- **Note**: Save As → `.xlsx` still writes only the active sheet; the whole
+  multi-sheet workbook round-trips through the `.aioffice` project format.
+  Documented in `KNOWN_LIMITS.md`.
+- **Test**: `src/io/xlsx.test.ts` (multi-sheet read, blank sheet dropped) +
+  `src/ui/state/edgecases.test.ts` (tab-per-sheet, first active, duplicate
+  names de-duplicated). 286 unit tests, 23 E2E green.

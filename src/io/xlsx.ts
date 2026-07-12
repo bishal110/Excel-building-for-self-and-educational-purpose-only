@@ -1,13 +1,8 @@
 import * as XLSX from 'xlsx';
 
-/** Read the first worksheet of an .xlsx file into a grid of raw strings.
+/** Extract one worksheet into a grid of raw strings.
  *  Formulas are preserved with a leading '='. */
-export async function readXlsx(file: File): Promise<string[][]> {
-  const buf = await file.arrayBuffer();
-  const wb = XLSX.read(buf, { type: 'array' });
-  const first = wb.SheetNames[0];
-  if (!first) return [];
-  const ws = wb.Sheets[first]!;
+function sheetToRows(ws: XLSX.WorkSheet): string[][] {
   const range = ws['!ref'] ? XLSX.utils.decode_range(ws['!ref']) : null;
   if (!range) return [];
   const rows: string[][] = [];
@@ -27,6 +22,33 @@ export async function readXlsx(file: File): Promise<string[][]> {
     rows.push(row);
   }
   return rows;
+}
+
+/** Read the first worksheet of an .xlsx file into a grid of raw strings. */
+export async function readXlsx(file: File): Promise<string[][]> {
+  const buf = await file.arrayBuffer();
+  const wb = XLSX.read(buf, { type: 'array' });
+  const first = wb.SheetNames[0];
+  if (!first) return [];
+  return sheetToRows(wb.Sheets[first]!);
+}
+
+/** Read every non-empty worksheet of an .xlsx file, preserving sheet names,
+ *  so a multi-tab workbook opens with all of its tabs. */
+export async function readXlsxWorkbook(
+  file: File,
+): Promise<{ name: string; rows: string[][] }[]> {
+  const buf = await file.arrayBuffer();
+  const wb = XLSX.read(buf, { type: 'array' });
+  const out: { name: string; rows: string[][] }[] = [];
+  for (const name of wb.SheetNames) {
+    const ws = wb.Sheets[name];
+    if (!ws) continue;
+    const rows = sheetToRows(ws);
+    if (rows.length === 0) continue; // skip blank sheets
+    out.push({ name, rows });
+  }
+  return out;
 }
 
 /** Build an .xlsx Blob from a grid of raw strings (formulas start with '='). */

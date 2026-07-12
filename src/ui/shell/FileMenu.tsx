@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { exportSuite, importSuite, newSuite } from '../../io/suiteProject';
 import { parseCsv, toCsv } from '../../io/csv';
-import { readXlsx, writeXlsx } from '../../io/xlsx';
+import { readXlsxWorkbook, writeXlsx } from '../../io/xlsx';
 import { store } from '../state/store';
 import { downloadBlob, pickFile } from '../fileUtils';
 
@@ -60,10 +60,10 @@ export function FileMenu({
         const ok = importSuite(JSON.parse(await file.text()));
         if (!ok) alert('Not a valid AI_Office project file.');
       } else if (ext === 'xlsx' || ext === 'xls' || ext === 'xlsm') {
-        const rows = await readXlsx(file);
-        if (rows.length === 0) return alert('That workbook appears to be empty.');
+        const sheets = await readXlsxWorkbook(file);
+        if (sheets.length === 0) return alert('That workbook appears to be empty.');
         onSwitchModule('sheets');
-        store.openRows(rows, file.name);
+        store.openSheets(sheets); // every worksheet becomes a tab
       } else if (ext === 'csv' || ext === 'txt' || ext === 'tsv') {
         onSwitchModule('sheets');
         store.openRows(parseCsv(await file.text()), file.name);
