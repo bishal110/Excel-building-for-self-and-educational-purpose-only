@@ -428,6 +428,70 @@ export class Store {
     });
   }
 
+  /**
+   * Fill-handle autofill: extend the source box `count` cells in `dir`.
+   * Excel semantics per lane (column when filling vertically, row when
+   * horizontally): a lane whose source cells are all plain numbers (2+)
+   * continues as an arithmetic series; otherwise the source tiles cyclically,
+   * with formulas re-anchored relatively and styles copied along.
+   */
+  autoFill(src: RangeBox, dir: 'up' | 'down' | 'left' | 'right', count: number) {
+    if (count <= 0) return;
+    const span = (a: number, b: number) => Array.from({ length: b - a + 1 }, (_, i) => a + i);
+    const vertical = dir === 'down' || dir === 'up';
+    const forward = dir === 'down' || dir === 'right';
+    this.mutate(() => {
+      const s = this.activeSheet();
+      const meta = this.activeMeta();
+      const lanes = vertical ? span(src.c1, src.c2) : span(src.r1, src.r2);
+      const positions = vertical ? span(src.r1, src.r2) : span(src.c1, src.c2);
+      const n = positions.length;
+      for (const lane of lanes) {
+        const raws = positions.map((p) => (vertical ? s.getRaw(lane, p) : s.getRaw(p, lane)));
+        const nums = raws.map((raw) =>
+          raw.trim() !== '' && !raw.startsWith('=') && Number.isFinite(Number(raw))
+            ? Number(raw)
+            : null,
+        );
+        const series = n >= 2 && nums.every((v) => v !== null);
+        const step = series ? (nums[n - 1]! - nums[0]!) / (n - 1) : 0;
+        for (let k = 1; k <= count; k++) {
+          const destPos = forward
+            ? (vertical ? src.r2 : src.c2) + k
+            : (vertical ? src.r1 : src.c1) - k;
+          if (destPos < 0) break;
+          const srcIdx = forward ? (n + ((destPos - positions[0]!) % n)) % n : n - 1 - ((k - 1) % n);
+          const srcPos = positions[srcIdx]!;
+          let raw: string;
+          if (series) {
+            const v = forward ? nums[n - 1]! + step * k : nums[0]! - step * k;
+            raw = String(Math.round(v * 1e10) / 1e10); // avoid FP noise like 0.30000000000000004
+          } else {
+            const delta = destPos - srcPos;
+            raw = offsetFormula(raws[srcIdx]!, vertical ? 0 : delta, vertical ? delta : 0);
+          }
+          const [dc, dr] = vertical ? [lane, destPos] : [destPos, lane];
+          const [sc, sr] = vertical ? [lane, srcPos] : [srcPos, lane];
+          s.setRaw(dc, dr, raw);
+          const style = meta.styles.get(`${sc},${sr}`);
+          if (style) meta.styles.set(`${dc},${dr}`, { ...style });
+          else meta.styles.delete(`${dc},${dr}`);
+        }
+      }
+      // Select the whole filled area, like Excel.
+      const union = {
+        c1: vertical ? src.c1 : Math.min(src.c1, forward ? src.c1 : src.c1 - count),
+        r1: !vertical ? src.r1 : Math.min(src.r1, forward ? src.r1 : src.r1 - count),
+        c2: vertical ? src.c2 : Math.max(src.c2, forward ? src.c2 + count : src.c2),
+        r2: !vertical ? src.r2 : Math.max(src.r2, forward ? src.r2 + count : src.r2),
+      };
+      this.selection = {
+        anchor: { col: Math.max(0, union.c1), row: Math.max(0, union.r1) },
+        active: { col: Math.max(0, union.c2), row: Math.max(0, union.r2) },
+      };
+    });
+  }
+
   // ---- Formulas helpers ----------------------------------------------
   autoSum() {
     const { col, row } = this.selection.active;

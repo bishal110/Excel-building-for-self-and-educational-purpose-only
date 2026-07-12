@@ -66,7 +66,103 @@ export const dateFunctions: Record<string, FuncDef> = {
     // Day 0 of the next month is the last day of the target month.
     return serialFromYMD(y, m + 1, 0);
   },
+  /** Volatile in Excel; here it evaluates when the cell recalculates
+   *  (on edit / file open), which is documented in KNOWN_LIMITS. */
+  TODAY: () => Math.floor((Date.now() - EPOCH) / DAY_MS),
+  NOW: () => (Date.now() - EPOCH) / DAY_MS,
+  TIME: (args, api) => {
+    const h = numArg(api, args, 0);
+    const m = numArg(api, args, 1);
+    const s = numArg(api, args, 2);
+    if (h === undefined || m === undefined || s === undefined) return VALUE;
+    if (isError(h)) return h;
+    if (isError(m)) return m;
+    if (isError(s)) return s;
+    const frac = (Math.trunc(h) * 3600 + Math.trunc(m) * 60 + Math.trunc(s)) / 86_400;
+    return frac - Math.floor(frac); // wraps at 24h like Excel
+  },
+  HOUR: timePartFn((secs) => Math.floor(secs / 3600) % 24),
+  MINUTE: timePartFn((secs) => Math.floor(secs / 60) % 60),
+  SECOND: timePartFn((secs) => Math.floor(secs) % 60),
+  EDATE: (args, api) => {
+    const s = numArg(api, args, 0);
+    const months = numArg(api, args, 1);
+    if (s === undefined || months === undefined) return VALUE;
+    if (isError(s)) return s;
+    if (isError(months)) return months;
+    const dt = dateFromSerial(s);
+    const target = new Date(Date.UTC(dt.getUTCFullYear(), dt.getUTCMonth() + Math.trunc(months), 1));
+    // Clamp the day to the target month's length (Jan 31 + 1mo = Feb 28/29).
+    const lastDay = serialFromYMD(target.getUTCFullYear(), target.getUTCMonth() + 2, 0);
+    const wanted = serialFromYMD(target.getUTCFullYear(), target.getUTCMonth() + 1, dt.getUTCDate());
+    return Math.min(wanted, lastDay);
+  },
+  DATEDIF: (args, api) => {
+    const start = numArg(api, args, 0);
+    const end = numArg(api, args, 1);
+    if (start === undefined || end === undefined || !args[2]) return VALUE;
+    if (isError(start)) return start;
+    if (isError(end)) return end;
+    const unitV = api.evalScalar(args[2]);
+    if (isError(unitV)) return unitV;
+    const unit = String(unitV ?? '').toUpperCase();
+    if (end < start) return NUM;
+    const a = dateFromSerial(start);
+    const b = dateFromSerial(end);
+    const wholeMonths =
+      (b.getUTCFullYear() - a.getUTCFullYear()) * 12 +
+      (b.getUTCMonth() - a.getUTCMonth()) -
+      (b.getUTCDate() < a.getUTCDate() ? 1 : 0);
+    switch (unit) {
+      case 'D':
+        return Math.round(end) - Math.round(start);
+      case 'M':
+        return wholeMonths;
+      case 'Y':
+        return Math.floor(wholeMonths / 12);
+      case 'YM':
+        return wholeMonths % 12;
+      case 'MD': {
+        // Days ignoring months and years.
+        const anchor = serialFromYMD(
+          b.getUTCFullYear(),
+          b.getUTCMonth() + (b.getUTCDate() < a.getUTCDate() ? 0 : 1),
+          a.getUTCDate(),
+        );
+        return Math.round(end) - anchor;
+      }
+      case 'YD': {
+        // Days ignoring years.
+        const yearsBetween = Math.floor(wholeMonths / 12);
+        const anchor = serialFromYMD(a.getUTCFullYear() + yearsBetween, a.getUTCMonth() + 1, a.getUTCDate());
+        return Math.round(end) - anchor;
+      }
+      default:
+        return NUM;
+    }
+  },
+  WEEKNUM: (args, api) => {
+    const s = numArg(api, args, 0);
+    if (s === undefined) return VALUE;
+    if (isError(s)) return s;
+    const dt = dateFromSerial(s);
+    const jan1 = serialFromYMD(dt.getUTCFullYear(), 1, 1);
+    const jan1Dow = dateFromSerial(jan1).getUTCDay(); // 0=Sun
+    // System 1, Sunday start: the week containing Jan 1 is week 1.
+    return Math.floor((Math.round(s) - jan1 + jan1Dow) / 7) + 1;
+  },
 };
+
+function timePartFn(pick: (secondsIntoDay: number) => number): FuncDef {
+  return (args, api) => {
+    const s = numArg(api, args, 0);
+    if (s === undefined) return VALUE;
+    if (isError(s)) return s;
+    if (s < 0) return NUM;
+    const frac = s - Math.floor(s);
+    return pick(Math.round(frac * 86_400));
+  };
+}
 
 function partFn(pick: (dt: Date) => number): FuncDef {
   return (args, api) => {

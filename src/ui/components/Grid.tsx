@@ -9,12 +9,31 @@ const HEADER_H = 26;
 const ROW_HEADER_W = 48;
 const OVERSCAN = 6;
 
+/**
+ * Bridge between grid cells and the live cell editor for Excel-style
+ * "point mode": while typing a formula, clicking a cell inserts its
+ * reference instead of committing the edit. The editor registers itself
+ * here on mount; tryPointRef returns true when it consumed the click.
+ */
+export const editorBridge: {
+  tryPointRef: ((ref: string, extend: boolean) => boolean) | null;
+} = { tryPointRef: null };
+
 export function Grid() {
   useStoreVersion();
   const scroller = useRef<HTMLDivElement>(null);
   const [scrollTop, setScrollTop] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
   const [viewportH, setViewportH] = useState(600);
+  // Anchor cell of an in-progress point-mode click (for drag-to-range).
+  const pointAnchor = useRef<{ col: number; row: number } | null>(null);
+  // Live preview of a fill-handle drag (covers source + fill target).
+  const [fillPreview, setFillPreview] = useState<{
+    c1: number;
+    r1: number;
+    c2: number;
+    r2: number;
+  } | null>(null);
 
   const sheet = store.activeSheet();
   const rowCount = Math.max(sheet.rowCount, 200);
@@ -60,6 +79,55 @@ export function Grid() {
   const rowTop = (r: number) =>
     r < frozenRows ? scrollTop + HEADER_H + r * ROW_H : HEADER_H + r * ROW_H;
 
+  /** Excel-style fill handle: drag the corner square to copy/extend. */
+  const startFillDrag = (e: ReactMouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const src = selectionBox(store.selection);
+    const el = scroller.current;
+    if (!el) return;
+    const hitCell = (ev: MouseEvent) => {
+      const rect = el.getBoundingClientRect();
+      const x = ev.clientX - rect.left + el.scrollLeft;
+      const y = ev.clientY - rect.top + el.scrollTop;
+      let col = 0;
+      for (let c = 0; c < colCount; c++) if (colX[c]! <= x) col = c;
+      const row = Math.max(0, Math.min(rowCount - 1, Math.floor((y - HEADER_H) / ROW_H)));
+      return { col, row };
+    };
+    const plan = (ev: MouseEvent) => {
+      const h = hitCell(ev);
+      const down = h.row - src.r2;
+      const up = src.r1 - h.row;
+      const right = h.col - src.c2;
+      const left = src.c1 - h.col;
+      const best = Math.max(down, up, right, left, 0);
+      if (best === 0) return null;
+      if (best === down) return { dir: 'down' as const, count: down };
+      if (best === up) return { dir: 'up' as const, count: up };
+      if (best === right) return { dir: 'right' as const, count: right };
+      return { dir: 'left' as const, count: left };
+    };
+    const previewFor = (p: { dir: string; count: number } | null) => {
+      if (!p) return { ...src };
+      if (p.dir === 'down') return { ...src, r2: src.r2 + p.count };
+      if (p.dir === 'up') return { ...src, r1: src.r1 - p.count };
+      if (p.dir === 'right') return { ...src, c2: src.c2 + p.count };
+      return { ...src, c1: src.c1 - p.count };
+    };
+    const onMove = (ev: MouseEvent) => setFillPreview(previewFor(plan(ev)));
+    const onUp = (ev: MouseEvent) => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      setFillPreview(null);
+      const p = plan(ev);
+      if (p) store.autoFill(src, p.dir, p.count);
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    setFillPreview({ ...src });
+  };
+
   const rows = rowsToRender.map((r) => {
     const cells = [];
     for (let c = 0; c < colCount; c++) {
@@ -93,10 +161,35 @@ export function Grid() {
           }}
           onMouseDown={(e) => {
             e.preventDefault();
+            // Point mode: while typing a formula, a click on another cell
+            // inserts its reference into the editor instead of committing.
+            const ed = store.editing;
+            if (ed && !(ed.col === c && ed.row === r) && editorBridge.tryPointRef) {
+              if (editorBridge.tryPointRef(`${numberToCol(c)}${r + 1}`, false)) {
+                pointAnchor.current = { col: c, row: r };
+                return;
+              }
+            }
+            pointAnchor.current = null;
             store.setActive(c, r, e.shiftKey);
           }}
           onMouseEnter={(e) => {
-            if (e.buttons === 1) store.setActive(c, r, true);
+            if (e.buttons !== 1) return;
+            const anchor = pointAnchor.current;
+            if (anchor && store.editing && editorBridge.tryPointRef) {
+              // Drag during point mode extends the pointed ref to a range.
+              const c1 = Math.min(anchor.col, c);
+              const r1 = Math.min(anchor.row, r);
+              const c2 = Math.max(anchor.col, c);
+              const r2 = Math.max(anchor.row, r);
+              const ref =
+                c1 === c2 && r1 === r2
+                  ? `${numberToCol(c1)}${r1 + 1}`
+                  : `${numberToCol(c1)}${r1 + 1}:${numberToCol(c2)}${r2 + 1}`;
+              editorBridge.tryPointRef(ref, true);
+              return;
+            }
+            store.setActive(c, r, true);
           }}
           onDoubleClick={() => store.startEditing({ col: c, row: r })}
         >
@@ -152,6 +245,30 @@ export function Grid() {
         {/* Corner */}
         <div className="corner" style={{ left: scrollLeft, top: scrollTop, width: ROW_HEADER_W }} />
         {rows}
+        {/* Fill handle at the bottom-right of the selection (hidden while editing) */}
+        {!store.editing && (
+          <div
+            className="fill-handle"
+            data-testid="fill-handle"
+            title="Drag to fill (copy values, extend series, adjust formulas)"
+            style={{
+              left: cellLeft(box.c2) + store.colWidth(box.c2) - 4,
+              top: rowTop(box.r2) + ROW_H - 4,
+            }}
+            onMouseDown={startFillDrag}
+          />
+        )}
+        {fillPreview && (
+          <div
+            className="fill-preview"
+            style={{
+              left: cellLeft(fillPreview.c1),
+              top: rowTop(fillPreview.r1),
+              width: colX[fillPreview.c2 + 1]! - colX[fillPreview.c1]!,
+              height: (fillPreview.r2 - fillPreview.r1 + 1) * ROW_H,
+            }}
+          />
+        )}
       </div>
     </div>
   );
@@ -177,11 +294,47 @@ function startColResize(e: ReactMouseEvent, col: number) {
   window.addEventListener('mouseup', onUp);
 }
 
+/** True when a formula's tail can take a reference: right after `=`, an
+ *  operator, an open paren, or an argument separator. */
+function refInsertable(v: string): boolean {
+  return v.startsWith('=') && /[=+\-*/^&%<>(,;:]\s*$/.test(v);
+}
+
 function CellEditor({ col, row }: { col: number; row: number }) {
   const [value, setValue] = useState(
     store.editInitial !== null ? store.editInitial : store.getRaw(col, row),
   );
   const ref = useRef<HTMLInputElement>(null);
+  // Start index of the reference inserted by point mode; typing clears it.
+  const pointStart = useRef<number | null>(null);
+  const valueRef = useRef(value);
+  valueRef.current = value;
+
+  useEffect(() => {
+    editorBridge.tryPointRef = (cellRef: string, extend: boolean) => {
+      const v = valueRef.current;
+      if (extend && pointStart.current !== null) {
+        // Drag: replace the pointed ref with the range.
+        setValue(v.slice(0, pointStart.current) + cellRef);
+        return true;
+      }
+      if (pointStart.current !== null) {
+        // A second click replaces the previously pointed ref.
+        setValue(v.slice(0, pointStart.current) + cellRef);
+        return true;
+      }
+      if (refInsertable(v)) {
+        pointStart.current = v.length;
+        setValue(v + cellRef);
+        return true;
+      }
+      return false; // formula is complete — let the click commit as usual
+    };
+    return () => {
+      editorBridge.tryPointRef = null;
+    };
+  }, []);
+
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -206,7 +359,10 @@ function CellEditor({ col, row }: { col: number; row: number }) {
       className="cell-editor"
       data-testid="cell-editor"
       value={value}
-      onChange={(e) => setValue(e.target.value)}
+      onChange={(e) => {
+        pointStart.current = null; // typing ends point mode
+        setValue(e.target.value);
+      }}
       onBlur={() => store.commitCell(col, row, value)}
       onKeyDown={(e) => {
         if (e.key === 'Enter') {

@@ -98,6 +98,51 @@ export const lookupFunctions: Record<string, FuncDef> = {
     if (i < 1 || i >= args.length) return VALUE;
     return api.evalScalar(args[i]!);
   },
+  XLOOKUP: (args, api) => {
+    // XLOOKUP(lookup_value, lookup_range, return_range,
+    //         [if_not_found], [match_mode 0|-1|1])
+    if (args.length < 3) return VALUE;
+    const target = api.evalScalar(args[0]!);
+    if (isError(target)) return target;
+    const lookupCells = api.rangeCells(args[1]!);
+    const returnCells = api.rangeCells(args[2]!);
+    if (!lookupCells || !returnCells) return VALUE;
+    if (lookupCells.length !== returnCells.length) return VALUE;
+    let matchMode = 0;
+    if (args[4]) {
+      const m = toNumber(api.evalScalar(args[4]));
+      if (isError(m)) return m;
+      matchMode = Math.trunc(m);
+      if (matchMode < -1 || matchMode > 1) return VALUE;
+    }
+    let exact = -1;
+    let nearIdx = -1;
+    let nearVal: CellValue = null;
+    for (let i = 0; i < lookupCells.length; i++) {
+      const v = api.ctx.getValue(lookupCells[i]!.col, lookupCells[i]!.row);
+      if (isError(v)) continue;
+      const cmp = compareVals(v, target);
+      if (cmp === 0) {
+        exact = i;
+        break;
+      }
+      // match_mode -1: largest value <= target; 1: smallest value >= target.
+      if (matchMode === -1 && cmp < 0 && (nearIdx === -1 || compareVals(v, nearVal) > 0)) {
+        nearIdx = i;
+        nearVal = v;
+      }
+      if (matchMode === 1 && cmp > 0 && (nearIdx === -1 || compareVals(v, nearVal) < 0)) {
+        nearIdx = i;
+        nearVal = v;
+      }
+    }
+    const hit = exact !== -1 ? exact : matchMode !== 0 ? nearIdx : -1;
+    if (hit === -1) {
+      return args[3] ? api.evalScalar(args[3]) : NA;
+    }
+    const rc = returnCells[hit]!;
+    return api.ctx.getValue(rc.col, rc.row);
+  },
 };
 
 function cellAt(

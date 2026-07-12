@@ -3,8 +3,8 @@
 </p>
 
 <p align="center">
-  <img alt="tests" src="https://img.shields.io/badge/unit_tests-259_passing-16a34a" />
-  <img alt="e2e" src="https://img.shields.io/badge/E2E-20_passing-16a34a" />
+  <img alt="tests" src="https://img.shields.io/badge/unit_tests-326_passing-16a34a" />
+  <img alt="e2e" src="https://img.shields.io/badge/E2E-26_passing-16a34a" />
   <img alt="typescript" src="https://img.shields.io/badge/TypeScript-strict-3178c6" />
   <img alt="bundle" src="https://img.shields.io/badge/offline_single_file-1.4_MB-2563eb" />
   <img alt="license" src="https://img.shields.io/badge/license-MIT-64748b" />
@@ -39,10 +39,10 @@ Every intentional limitation is written down in
 
 | Area | What works today |
 |------|------------------|
-| **Formula engine** | Excel-style precedence (`-2^2 = 4`), `$A$1` absolute refs, ranges, error codes (`#DIV/0!`, `#REF!`, `#VALUE!`, `#NAME?`, `#N/A`, `#NUM!`, `#CYCLE!`) that propagate through references and ranges, and cycle detection. |
-| **73 functions** | Math, statistics, text, logical, lookup (`VLOOKUP`/`HLOOKUP`/`INDEX`/`MATCH`/`CHOOSE`) and date basics. |
+| **Formula engine** | Excel-style precedence (`-2^2 = 4`), `$A$1` absolute refs, ranges, error codes (`#DIV/0!`, `#REF!`, `#VALUE!`, `#NAME?`, `#N/A`, `#NUM!`, `#CYCLE!`) that propagate through references and ranges, and cycle detection. **Point mode**: while typing a formula, click a cell to insert its reference (drag for a range), exactly like Excel. |
+| **144 functions** | Math & trig, statistics (`SUMIFS`/`COUNTIFS`/`AVERAGEIFS`/`MAXIFS`/`MINIFS`, `LARGE`/`SMALL`/`RANK`/`MODE`/`PERCENTILE`/`QUARTILE`), text (`TEXTJOIN`, `CHAR`, `CLEAN`…), logical & info (`IFS`, `SWITCH`, `ISBLANK`/`ISNUMBER`/`ISERROR`…), lookup (`XLOOKUP`, `VLOOKUP`/`HLOOKUP`/`INDEX`/`MATCH`), date & time (`TODAY`, `NOW`, `EDATE`, `DATEDIF`, `WEEKNUM`, `TIME`/`HOUR`/`MINUTE`/`SECOND`) — plus friendly aliases like `AVG` and modern dotted names (`STDEV.S`). |
 | **Grid** | Virtualized rendering (smooth at 200×52 and beyond), mouse + keyboard selection, inline editing, column resize, freeze header row/column. |
-| **Editing** | Full shortcut set — copy/cut/paste, undo/redo (100 steps), bold/italic/underline, select-all, AutoSum (`Alt+=`), `F2`, `Tab`/`Enter`/`Esc`/`Delete`. |
+| **Editing** | Full shortcut set — copy/cut/paste, undo/redo (100 steps), bold/italic/underline, select-all, AutoSum (`Alt+=`), `F2`, `Tab`/`Enter`/`Esc`/`Delete`. **Fill handle**: drag the little square at the selection corner to copy cells, extend number series (1, 2 → 3, 4, 5…), and re-anchor formulas — in all four directions. |
 | **Formats** | Number formats including **₹ Indian (lakh/crore)** grouping, percent, currency, thousands. |
 | **Sheets** | Multiple sheets with tabs (add / rename / delete). |
 | **Ribbon** | Excel-style tabbed ribbon — **Home** (clipboard, font, alignment, number format, cells, editing), **Insert** (PivotTable, Chart), **Data** (sort, find & replace, PivotTable, Chart), **View** (freeze, macros, help). |
@@ -99,11 +99,11 @@ npm run lint      # type-check with the TypeScript compiler
 npm run e2e       # end-to-end browser tests (Playwright)
 ```
 
-- **259 unit tests** cover the formula engine, grid operations, CSV/XLSX, the
+- **326 unit tests** cover the formula engine, grid operations, CSV/XLSX, the
   document model, the slide deck, the whole-suite project format, 10k-cell
   performance, and the app store (including a feature-by-feature audit, the
   Help↔keybinding audit, and stale-state edge cases).
-- **Playwright E2E (20 tests)** cover the Sheets flow (edit → formula → insert row →
+- **Playwright E2E (26 tests)** cover the Sheets flow (edit → formula → insert row →
   undo → export, freeze, macros, help), the Docs flow (type → format → insert
   table → export `.docx`), the Slides flow (create → reorder → present → exit),
   the File menu (save/new), a **keyboard-only accessibility** walkthrough, a
@@ -121,7 +121,7 @@ npm run e2e       # end-to-end browser tests (Playwright)
 ```
 src/
 ├── engine/                 # Framework-agnostic spreadsheet engine (no React)
-│   ├── formula/            #   tokenizer → parser → evaluator, 73 functions
+│   ├── formula/            #   tokenizer → parser → evaluator, 144 functions
 │   ├── grid/               #   workbook, sheet, mutations, sort/fill/find
 │   ├── format/             #   number formatting (incl. ₹ Indian grouping)
 │   └── macro/              #   sandboxed JS macro runtime + sheet API

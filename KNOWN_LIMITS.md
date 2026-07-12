@@ -18,9 +18,14 @@ no feature parity is claimed. Items are moved here rather than silently dropped.
   Excel for all dates on or after 1900-03-01. The historical Excel "1900 is a
   leap year" bug is intentionally **not** reproduced, so serials for
   1900-01-01…1900-02-28 differ from Excel by one.
-- **Non-deterministic functions** `TODAY`, `NOW`, `RAND`, `RANDBETWEEN` are not
-  in the engine core (they would make recalculation non-deterministic and
-  untestable). They will be provided by the app shell with a controlled clock.
+- **Non-deterministic functions** `TODAY`, `NOW`, `RAND`, `RANDBETWEEN` exist
+  (users expect them) but are **not volatile**: they evaluate when the cell
+  recalculates (on edit or file open), not continuously. A sheet left open
+  overnight keeps yesterday's `TODAY()` until something triggers a recalc.
+  Tests treat their output as ranges, not exact values.
+- **Dynamic references** (`OFFSET`, `INDIRECT`) are not supported: the
+  dependency graph is static — it must know a formula's precedents from its
+  text alone. `XLOOKUP`/`INDEX`/`MATCH` cover most of the same needs safely.
 - **`TEXT` format strings** support only simple numeric patterns (`0`, `0.00`,
   …). Full Excel format-code parsing (date codes, sections, colors) is not done.
 - **Number precision** uses IEEE-754 doubles like Excel, but AI_Office does not

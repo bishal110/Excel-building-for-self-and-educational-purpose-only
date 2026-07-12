@@ -137,3 +137,40 @@ export function valueToText(v: CellValue): string {
   if (typeof v === 'boolean') return v ? 'TRUE' : 'FALSE';
   return String(v);
 }
+
+/**
+ * Evaluate the (range, criterion) pairs of a *IFS function starting at
+ * `startIdx` and return the indices (into the first range) where every
+ * criterion matches. All ranges must be the same size.
+ */
+export function multiCriteriaMatches(
+  api: EvalApi,
+  args: Node[],
+  startIdx: number,
+): number[] | CellError {
+  let size = -1;
+  const preds: Array<{ cells: Array<{ col: number; row: number }>; pred: (v: CellValue) => boolean }> = [];
+  for (let i = startIdx; i + 1 < args.length; i += 2) {
+    const cells = api.rangeCells(args[i]!);
+    if (!cells) return VALUE;
+    if (size === -1) size = cells.length;
+    else if (cells.length !== size) return VALUE;
+    const crit = api.evalScalar(args[i + 1]!);
+    if (isError(crit)) return crit;
+    preds.push({ cells, pred: makeCriteria(crit) });
+  }
+  if (preds.length === 0) return VALUE;
+  const out: number[] = [];
+  for (let i = 0; i < size; i++) {
+    let ok = true;
+    for (const { cells, pred } of preds) {
+      const v = api.ctx.getValue(cells[i]!.col, cells[i]!.row);
+      if (isError(v) || !pred(v)) {
+        ok = false;
+        break;
+      }
+    }
+    if (ok) out.push(i);
+  }
+  return out;
+}

@@ -312,6 +312,23 @@ body { color: var(--text); background: var(--bg); font-size: 13px; }
   z-index: 5;
 }
 
+/* Fill handle: the small draggable square at the selection's corner */
+.fill-handle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: var(--accent);
+  border: 1px solid #fff;
+  cursor: crosshair;
+  z-index: 6;
+}
+.fill-preview {
+  position: absolute;
+  border: 2px dashed var(--accent);
+  pointer-events: none;
+  z-index: 5;
+}
+
 /* Sheet tabs */
 .sheet-tabs {
   display: flex;

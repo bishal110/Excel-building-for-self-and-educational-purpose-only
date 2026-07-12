@@ -120,6 +120,51 @@ export const textFunctions: Record<string, FuncDef> = {
     }
     return toText(v);
   },
+  CHAR: (args, api) => {
+    const n = scalarArg(api, args, 0);
+    if (n === undefined) return VALUE;
+    const code = toNumber(n);
+    if (isError(code)) return code;
+    const c = Math.trunc(code);
+    if (c < 1 || c > 1_114_111) return VALUE;
+    return String.fromCodePoint(c);
+  },
+  CODE: (args, api) => {
+    const s = textArg(api, args, 0);
+    if (isError(s)) return s;
+    if (s.length === 0) return VALUE;
+    return s.codePointAt(0)!;
+  },
+  CLEAN: (args, api) => {
+    const s = textArg(api, args, 0);
+    if (isError(s)) return s;
+    // Strip non-printable control characters, like Excel CLEAN.
+    // eslint-disable-next-line no-control-regex
+    return s.replace(/[\u0000-\u001F\u007F]/g, '');
+  },
+  TEXTJOIN: (args, api) => {
+    // TEXTJOIN(delimiter, ignore_empty, value1, [value2...])
+    if (args.length < 3) return VALUE;
+    const delim = textArg(api, args, 0);
+    if (isError(delim)) return delim;
+    const ignore = api.evalScalar(args[1]!);
+    if (isError(ignore)) return ignore;
+    const parts: string[] = [];
+    for (let i = 2; i < args.length; i++) {
+      const cells = api.rangeCells(args[i]!);
+      const vals = cells
+        ? cells.map((c) => api.ctx.getValue(c.col, c.row))
+        : [api.evalScalar(args[i]!)];
+      for (const v of vals) {
+        if (isError(v)) return v;
+        const t = toText(v ?? '');
+        if (isError(t)) return t;
+        if (Boolean(ignore) && t === '') continue;
+        parts.push(t);
+      }
+    }
+    return parts.join(delim);
+  },
 };
 
 function sliceFn(

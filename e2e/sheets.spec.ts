@@ -98,6 +98,70 @@ test('PivotTable summarizes a selection into a new sheet', async ({ page }) => {
   await expect(page.locator('[data-cell="B2"]')).toHaveText('220');
 });
 
+test('point mode: click a cell while typing a formula to insert its reference', async ({ page }) => {
+  await editCell(page, 'A1', '10');
+  await editCell(page, 'A2', '32');
+
+  // Start a formula in B1, then CLICK A1 — the ref must be inserted, not
+  // the edit committed (this is Excel's point mode).
+  await page.locator('[data-cell="B1"]').dblclick();
+  const ed = page.getByTestId('cell-editor');
+  await ed.fill('=');
+  await page.locator('[data-cell="A1"]').click();
+  await expect(ed).toHaveValue('=A1');
+
+  // Type an operator, point at A2, and confirm.
+  await ed.press('End');
+  await ed.pressSequentially('+');
+  await page.locator('[data-cell="A2"]').click();
+  await expect(ed).toHaveValue('=A1+A2');
+  await ed.press('Enter');
+  await expect(page.locator('[data-cell="B1"]')).toHaveText('42');
+});
+
+test('fill handle: drag the + to extend a series and copy a formula', async ({ page }) => {
+  await editCell(page, 'A1', '1');
+  await editCell(page, 'A2', '2');
+
+  // Select A1:A2 and drag the fill handle down to A5.
+  await page.locator('[data-cell="A1"]').click();
+  await page.locator('[data-cell="A2"]').click({ modifiers: ['Shift'] });
+  const handle = page.getByTestId('fill-handle');
+  await expect(handle).toBeVisible();
+  await handle.hover();
+  await page.mouse.down();
+  await page.locator('[data-cell="A5"]').hover();
+  await page.mouse.up();
+  await expect(page.locator('[data-cell="A3"]')).toHaveText('3');
+  await expect(page.locator('[data-cell="A4"]')).toHaveText('4');
+  await expect(page.locator('[data-cell="A5"]')).toHaveText('5');
+
+  // Formula copy: B1 doubles A1; fill it down and refs re-anchor.
+  await editCell(page, 'B1', '=A1*2');
+  await page.locator('[data-cell="B1"]').click();
+  await handle.hover();
+  await page.mouse.down();
+  await page.locator('[data-cell="B3"]').hover();
+  await page.mouse.up();
+  await expect(page.locator('[data-cell="B2"]')).toHaveText('4');
+  await expect(page.locator('[data-cell="B3"]')).toHaveText('6');
+});
+
+test('everyday functions: TODAY, AVG, IFS, XLOOKUP, TEXTJOIN', async ({ page }) => {
+  await editCell(page, 'A1', '=TODAY()');
+  await expect(page.locator('[data-cell="A1"]')).not.toHaveText('#NAME?');
+  await editCell(page, 'A2', '=AVG(2,4,6)');
+  await expect(page.locator('[data-cell="A2"]')).toHaveText('4');
+  await editCell(page, 'A3', '=IFS(FALSE,1,TRUE,2)');
+  await expect(page.locator('[data-cell="A3"]')).toHaveText('2');
+  await editCell(page, 'B1', 'kiwi');
+  await editCell(page, 'C1', '99');
+  await editCell(page, 'A4', '=XLOOKUP("kiwi",B1:B1,C1:C1)');
+  await expect(page.locator('[data-cell="A4"]')).toHaveText('99');
+  await editCell(page, 'A5', '=TEXTJOIN("-",TRUE,"a","b")');
+  await expect(page.locator('[data-cell="A5"]')).toHaveText('a-b');
+});
+
 test('status bar shows sum/avg/count for a selection', async ({ page }) => {
   await editCell(page, 'A1', '10');
   await editCell(page, 'A2', '20');

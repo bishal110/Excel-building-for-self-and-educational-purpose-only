@@ -326,3 +326,53 @@ screenshots at 360/768/1366 px (0 px horizontal overflow at all three).
   286 unit tests, production build, 23 Playwright E2E all green on the new
   toolchain; electron-builder 26 + Electron 43 config/rebuild/download
   smoke-tested. Version bumped to 0.3.0.
+
+## Excel-parity pass 2 (field report: references, fill handle, functions)
+
+### BUG-018 — clicking a cell while typing a formula destroyed the formula
+- **Symptom (field report)**: "the reference system doesnt work." Typing `=`
+  and clicking another cell — the way everyone builds formulas in Excel —
+  moved the selection, blurred the editor, and committed the half-typed
+  formula instead of inserting the clicked cell's reference.
+- **Root cause**: the grid's `onMouseDown` unconditionally called
+  `setActive`, and the editor commits on blur. Excel's **point mode** (click
+  = insert reference while composing) didn't exist.
+- **Fix**: an `editorBridge` between grid and editor. While the editor holds
+  a formula whose tail can accept a reference (after `=`, an operator, `(`,
+  or `,`), clicking a cell inserts its A1 reference; dragging inserts a range
+  (`A1:B3`); clicking a different cell replaces the pointed ref; typing
+  resumes normal editing; and when the formula is complete, clicking commits
+  as before (also Excel's behaviour).
+- **Test**: E2E "point mode: click a cell while typing a formula…" builds
+  `=A1+A2` entirely by pointing and asserts the result.
+
+### FEATURE — fill handle (the little + at the selection corner)
+- **Field report**: "i cannot copy the cell like i do in excel using the
+  small + sign that appears at the corner of a cell."
+- **Change**: a draggable fill handle on the selection's bottom-right corner
+  with a dashed preview, filling in all four directions: lanes of 2+ plain
+  numbers extend as an arithmetic series (1, 2 → 3, 4, 5), formulas
+  re-anchor relatively (`=A1*2` filled down becomes `=A2*2`), everything else
+  tiles cyclically, styles copy along, the filled area becomes the selection
+  (like Excel), and the whole fill is one undo step.
+- **Test**: 9 unit tests (`autofill.test.ts`) + an E2E drag test.
+
+### FEATURE — function library 73 → 144
+- **Field report**: "include all function like date() avg() sum() everything
+  that you know" — `TODAY()`/`NOW()` returned `#NAME?`, `AVG` didn't exist.
+- **Change**: added date & time (`TODAY`, `NOW`, `TIME`, `HOUR`, `MINUTE`,
+  `SECOND`, `EDATE`, `DATEDIF`, `WEEKNUM`), math & trig (`SIN`…`ATAN2`,
+  `DEGREES`/`RADIANS`, `FACT`, `GCD`/`LCM`, `QUOTIENT`, `EVEN`/`ODD`,
+  `MROUND`, `RAND`/`RANDBETWEEN`, `SUMPRODUCT`, `SUMIFS`), statistics
+  (`COUNTIFS`, `AVERAGEIFS`, `MAXIFS`/`MINIFS`, `LARGE`/`SMALL`, `RANK`,
+  `MODE`, `PERCENTILE`/`QUARTILE`, `GEOMEAN`, `AVEDEV`, `COUNTUNIQUE`), text
+  (`TEXTJOIN`, `CHAR`, `CODE`, `CLEAN`), logical & info (`IFS`, `SWITCH`,
+  `ISBLANK`/`ISNUMBER`/`ISTEXT`/`ISLOGICAL`/`ISERROR`/`ISERR`/`ISNA`/
+  `ISEVEN`/`ISODD`, `N`), lookup (`XLOOKUP` with if-not-found and
+  approximate modes), and aliases (`AVG`, `STDEV.S`/`.P`, `VAR.S`/`.P`,
+  `MODE.SNGL`, `PERCENTILE.INC`, `QUARTILE.INC`).
+- **Note**: `TODAY`/`NOW`/`RAND` are non-volatile (evaluate on recalc, not
+  continuously); `OFFSET`/`INDIRECT` stay unsupported because the dependency
+  graph is static. Both documented in `KNOWN_LIMITS.md`.
+- **Test**: 31 unit tests (`functions.extended.test.ts`) + an E2E check that
+  `TODAY`/`AVG`/`IFS`/`XLOOKUP`/`TEXTJOIN` work in the real grid.

@@ -15,6 +15,16 @@ const registry: Record<string, FuncDef> = {
   ...dateFunctions,
 };
 
+// Friendly aliases for names people type from habit.
+registry['AVG'] = registry['AVERAGE']!;
+registry['MODE.SNGL'] = registry['MODE']!;
+registry['PERCENTILE.INC'] = registry['PERCENTILE']!;
+registry['QUARTILE.INC'] = registry['QUARTILE']!;
+registry['STDEV.S'] = registry['STDEV']!;
+registry['STDEV.P'] = registry['STDEVP']!;
+registry['VAR.S'] = registry['VAR']!;
+registry['VAR.P'] = registry['VARP']!;
+
 export function getFunction(name: string): FuncDef | undefined {
   return registry[name.toUpperCase()];
 }

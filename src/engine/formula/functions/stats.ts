@@ -1,4 +1,4 @@
-import { DIV0, NUM, VALUE, isError } from '../errors';
+import { DIV0, NA, NUM, VALUE, isError } from '../errors';
 import type { EvalApi } from '../evaluator';
 import { CellValue } from '../values';
 import type { Node } from '../ast';
@@ -7,6 +7,8 @@ import {
   collectValues,
   FuncDef,
   makeCriteria,
+  multiCriteriaMatches,
+  valueToText,
 } from './helpers';
 
 export const statsFunctions: Record<string, FuncDef> = {
@@ -74,7 +76,130 @@ export const statsFunctions: Record<string, FuncDef> = {
   },
   SUMIF: (args, api) => conditionalAggregate(args, api, 'sum'),
   AVERAGEIF: (args, api) => conditionalAggregate(args, api, 'avg'),
+  LARGE: (args, api) => kth(args, api, 'large'),
+  SMALL: (args, api) => kth(args, api, 'small'),
+  RANK: (args, api) => {
+    const x = api.evalScalar(args[0]!);
+    if (isError(x)) return x;
+    if (typeof x !== 'number') return VALUE;
+    const nums = collectNumbers(api, [args[1]!]);
+    if (isError(nums)) return nums;
+    let ascending = false;
+    if (args[2]) {
+      const o = api.evalScalar(args[2]);
+      if (isError(o)) return o;
+      ascending = Boolean(o);
+    }
+    if (!nums.includes(x)) return NA;
+    const better = nums.filter((v) => (ascending ? v < x : v > x)).length;
+    return better + 1;
+  },
+  MODE: (args, api) => {
+    const nums = collectNumbers(api, args);
+    if (isError(nums)) return nums;
+    const counts = new Map<number, number>();
+    let best: number | null = null;
+    let bestCount = 1;
+    for (const v of nums) {
+      const c = (counts.get(v) ?? 0) + 1;
+      counts.set(v, c);
+      if (c > bestCount) {
+        best = v;
+        bestCount = c;
+      }
+    }
+    return best === null ? NUM : best;
+  },
+  PERCENTILE: (args, api) => percentileFn(args, api, (p) => p),
+  QUARTILE: (args, api) => percentileFn(args, api, (q) => q / 4),
+  GEOMEAN: (args, api) => {
+    const nums = collectNumbers(api, args);
+    if (isError(nums)) return nums;
+    if (nums.length === 0 || nums.some((v) => v <= 0)) return NUM;
+    const logSum = nums.reduce((a, b) => a + Math.log(b), 0);
+    return Math.exp(logSum / nums.length);
+  },
+  AVEDEV: (args, api) => {
+    const nums = collectNumbers(api, args);
+    if (isError(nums)) return nums;
+    if (nums.length === 0) return NUM;
+    const mean = nums.reduce((a, b) => a + b, 0) / nums.length;
+    return nums.reduce((a, b) => a + Math.abs(b - mean), 0) / nums.length;
+  },
+  COUNTIFS: (args, api) => {
+    const matches = multiCriteriaMatches(api, args, 0);
+    if (isError(matches)) return matches;
+    return matches.length;
+  },
+  AVERAGEIFS: (args, api) => ifsAggregate(args, api, 'avg'),
+  MAXIFS: (args, api) => ifsAggregate(args, api, 'max'),
+  MINIFS: (args, api) => ifsAggregate(args, api, 'min'),
+  COUNTUNIQUE: (args, api) => {
+    // Google Sheets: count distinct non-blank values.
+    const vals = collectValues(api, args);
+    if (isError(vals)) return vals;
+    const seen = new Set<string>();
+    for (const v of vals) {
+      if (v === null || v === '') continue;
+      seen.add(`${typeof v}:${valueToText(v)}`);
+    }
+    return seen.size;
+  },
 };
+
+function kth(args: Node[], api: EvalApi, mode: 'large' | 'small'): CellValue {
+  const nums = collectNumbers(api, [args[0]!]);
+  if (isError(nums)) return nums;
+  const kv = args[1] ? api.evalScalar(args[1]) : 1;
+  if (isError(kv)) return kv;
+  const k = Math.trunc(typeof kv === 'number' ? kv : Number(kv));
+  if (!Number.isFinite(k) || k < 1 || k > nums.length) return NUM;
+  const sorted = [...nums].sort((a, b) => (mode === 'large' ? b - a : a - b));
+  return sorted[k - 1]!;
+}
+
+function percentileFn(
+  args: Node[],
+  api: EvalApi,
+  toP: (raw: number) => number,
+): CellValue {
+  const nums = collectNumbers(api, [args[0]!]);
+  if (isError(nums)) return nums;
+  if (nums.length === 0) return NUM;
+  const raw = args[1] ? api.evalScalar(args[1]) : 0;
+  if (isError(raw)) return raw;
+  if (typeof raw !== 'number') return VALUE;
+  const p = toP(raw);
+  if (p < 0 || p > 1) return NUM;
+  const sorted = [...nums].sort((a, b) => a - b);
+  const idx = p * (sorted.length - 1);
+  const lo = Math.floor(idx);
+  const hi = Math.ceil(idx);
+  if (lo === hi) return sorted[lo]!;
+  return sorted[lo]! + (sorted[hi]! - sorted[lo]!) * (idx - lo);
+}
+
+function ifsAggregate(
+  args: Node[],
+  api: EvalApi,
+  mode: 'avg' | 'max' | 'min',
+): CellValue {
+  const valueCells = api.rangeCells(args[0]!);
+  if (!valueCells) return VALUE;
+  const matches = multiCriteriaMatches(api, args, 1);
+  if (isError(matches)) return matches;
+  const nums: number[] = [];
+  for (const i of matches) {
+    const c = valueCells[i];
+    if (!c) return VALUE;
+    const v = api.ctx.getValue(c.col, c.row);
+    if (isError(v)) return v;
+    if (typeof v === 'number') nums.push(v);
+  }
+  if (mode === 'avg') return nums.length === 0 ? DIV0 : nums.reduce((a, b) => a + b, 0) / nums.length;
+  if (nums.length === 0) return 0;
+  return mode === 'max' ? Math.max(...nums) : Math.min(...nums);
+}
 
 function stdevVar(
   api: EvalApi,
