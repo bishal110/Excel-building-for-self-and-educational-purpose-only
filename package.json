@@ -1,7 +1,7 @@
 {
   "name": "ai-office",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.3.0",
   "type": "module",
   "description": "AI_Office — an offline-first spreadsheet suite (built for self-learning and educational purposes).",
   "license": "MIT",
@@ -41,7 +41,7 @@
     "docx": "^9.7.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "xlsx": "^0.18.5"
+    "xlsx": "npm:@e965/xlsx@0.20.3"
   },
   "devDependencies": {
     "@playwright/test": "^1.49.1",
@@ -49,13 +49,13 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.4",
-    "@vitest/coverage-v8": "^2.1.9",
-    "electron": "^33.4.11",
-    "electron-builder": "^25.1.8",
+    "@vitest/coverage-v8": "^4.1.10",
+    "electron": "^43.1.0",
+    "electron-builder": "^26.15.3",
     "jsdom": "^25.0.1",
     "typescript": "~5.8.2",
     "vite": "^6.0.7",
     "vite-plugin-singlefile": "^2.3.3",
-    "vitest": "^2.1.9"
+    "vitest": "^4.1.10"
   }
 }

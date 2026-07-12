@@ -301,3 +301,28 @@ screenshots at 360/768/1366 px (0 px horizontal overflow at all three).
 - **Test**: `src/io/xlsx.test.ts` (multi-sheet read, blank sheet dropped) +
   `src/ui/state/edgecases.test.ts` (tab-per-sheet, first active, duplicate
   names de-duplicated). 286 unit tests, 23 E2E green.
+
+## Dependency security pass (v0.3.0)
+
+### HARDENING-002 — cleared all 17 `npm audit` findings (2 critical, 12 high, 3 moderate)
+- **Trigger**: `npm install` on the user's PC reported 17 vulnerabilities.
+- **Triage** (what actually ships vs. dev-only):
+  - **`xlsx` 0.18.5 (SHIPS IN THE APP)** — prototype pollution
+    (GHSA-4r6h-8v6p-xvw6) + ReDoS (GHSA-5pgg-2g8v-p4x9), exploitable by a
+    booby-trapped workbook the user opens. npm shows "no fix" because SheetJS
+    stopped publishing there at 0.18.5. **Fixed** by upgrading to 0.20.3 via
+    the npm alias `xlsx → @e965/xlsx@0.20.3` (a mirror of the official
+    `cdn.sheetjs.com` builds — verifiable by diffing tarballs). Drop-in: all
+    round-trip tests pass unchanged.
+  - **`electron` 33 (SHIPS AS THE .EXE SHELL)** — ASAR integrity bypass, IPC
+    reply spoofing, several use-after-frees. **Fixed**: Electron 33 → 43.1.0.
+    Our shell uses only stable APIs (BrowserWindow/loadFile/
+    setWindowOpenHandler) and was already hardened (contextIsolation,
+    sandbox, no nodeIntegration) — no code changes needed.
+  - **Dev-tooling only (never shipped)** — vitest/vite/esbuild dev-server
+    advisories and electron-builder's `tar` chain. **Fixed**: vitest 2 → 4,
+    @vitest/coverage-v8 4, electron-builder 25 → 26.15.3.
+- **Result**: `npm audit` → **0 vulnerabilities**. Verified: tsc clean,
+  286 unit tests, production build, 23 Playwright E2E all green on the new
+  toolchain; electron-builder 26 + Electron 43 config/rebuild/download
+  smoke-tested. Version bumped to 0.3.0.
