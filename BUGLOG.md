@@ -327,6 +327,24 @@ screenshots at 360/768/1366 px (0 px horizontal overflow at all three).
   toolchain; electron-builder 26 + Electron 43 config/rebuild/download
   smoke-tested. Version bumped to 0.3.0.
 
+### BUG-019 — v0.3.0 .exe would not launch on Windows ARM64 (silent, no window)
+- **Symptom (field report)**: the freshly built `AI_Office 0.3.0.exe` did
+  nothing when double-clicked — no window, no error — while the older
+  `0.2.0.exe` (Electron 33) kept working.
+- **Probable cause**: HARDENING-002 jumped Electron 33 → **43.1.0**, and
+  Electron 43.0.0 had *just* shipped as "Latest Stable" (brand-new
+  Chromium 150) — a bleeding-edge major with minimal field time on
+  win-arm64. Diagnosis is probable rather than proven (the crash is silent);
+  if 0.3.1 still fails, run the exe from PowerShell to capture the error.
+- **Fix**: pin Electron to **42.6.1** — the newest patch of the previous,
+  battle-tested major. Every advisory from HARDENING-002 affects only
+  `<=39.8.4`, so 42.x keeps all security fixes; `npm audit` remains at 0.
+  Version bumped to 0.3.1. Lesson recorded: for the Electron runtime, prefer
+  the newest patch of major N-1 over a just-released major N.
+- **Verified here**: tsc + build green; electron-builder loads config,
+  rebuilds natives, and downloads Electron 42.6.1 (Windows packaging itself
+  runs on the user's PC).
+
 ## Excel-parity pass 2 (field report: references, fill handle, functions)
 
 ### BUG-018 — clicking a cell while typing a formula destroyed the formula
