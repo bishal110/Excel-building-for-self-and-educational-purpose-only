@@ -28,17 +28,32 @@ export function Toolbar({
   useStoreVersion();
 
   const importCsv = async () => {
-    const file = await pickFile('.csv,text/csv');
+    const file = await pickFile('.csv,.txt,.tsv,text/csv,text/plain');
     if (!file) return;
-    store.importRows(parseCsv(await file.text()));
+    try {
+      store.importRows(parseCsv(await file.text()));
+    } catch {
+      alert('Could not read that CSV file.');
+    }
   };
   const exportCsv = () => {
     downloadBlob(toCsv(store.exportRows()), 'ai-office.csv', 'text/csv');
   };
   const importXlsx = async () => {
-    const file = await pickFile('.xlsx');
+    const file = await pickFile(
+      '.xlsx,.xls,.xlsm,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel',
+    );
     if (!file) return;
-    store.importRows(await readXlsx(file));
+    try {
+      const rows = await readXlsx(file);
+      if (rows.length === 0) {
+        alert('That workbook appears to be empty.');
+        return;
+      }
+      store.importRows(rows);
+    } catch {
+      alert('Could not read that Excel file. Try re-saving it as .xlsx or export to CSV.');
+    }
   };
   const exportXlsx = () => {
     downloadBlob(
@@ -55,7 +70,7 @@ export function Toolbar({
     );
   };
   const openProject = async () => {
-    const file = await pickFile('.aioffice,application/json');
+    const file = await pickFile('.aioffice,.json,application/json');
     if (!file) return;
     try {
       const state = JSON.parse(await file.text()) as ProjectState;

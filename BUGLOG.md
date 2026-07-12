@@ -204,3 +204,27 @@ screenshots at 360/768/1366 px (0 px horizontal overflow at all three).
   and `data:image/*` pass.
 - **Test**: `ui/security.test.ts` (7 cases incl. case-mangled `jAvAsCrIpT:`).
 - The full threat model now lives in `docs/SECURITY.md`.
+
+## Field report (Windows desktop build)
+
+### BUG-014 — file import couldn't open/detect files (found on real Windows Electron build)
+- **Symptom**: In the packaged Windows app, "Import CSV" / "Import xlsx" /
+  "Open project" failed to detect files — the OS dialog either didn't open or
+  a selected file never loaded.
+- **Root cause**: `pickFile()` created an `<input type="file">` but **never
+  attached it to the document** before calling `.click()`. A detached file
+  input is unreliable in packaged Electron (and some browsers): the native
+  dialog may not open and the `change` event may not fire. (The sibling
+  `downloadBlob` correctly appended its element — the picker didn't.)
+  Secondary cause: file-type filters were too narrow (`.xlsx` only), greying
+  out valid `.xls`/`.csv`/`.txt` files in the Windows dialog.
+- **Fix**: `pickFile()` now appends the input to `document.body` (hidden),
+  listens for both `change` and `cancel`, and cleans up afterward. Import
+  filters broadened (`.csv/.txt/.tsv`, `.xlsx/.xls/.xlsm`, `.aioffice/.json`)
+  and each importer wrapped in a try/catch with a clear error message.
+- **Test**: `e2e/sheets.spec.ts` → "import a real CSV file populates the grid"
+  feeds an actual CSV through the file chooser and asserts the cells fill.
+
+### NOTE — electron-builder "author is missed in package.json"
+- A cosmetic warning during `npm run dist:win-*`. Added an `author` field to
+  `package.json`; the warning is gone and it populates the exe's metadata.

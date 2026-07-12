@@ -19,6 +19,23 @@ test.beforeEach(async ({ page }) => {
   await expect(page.getByTestId('grid')).toBeVisible();
 });
 
+test('import a real CSV file populates the grid', async ({ page }) => {
+  // Provide a real file to the OS file dialog when it opens.
+  page.on('filechooser', (chooser) =>
+    chooser.setFiles({
+      name: 'wells.csv',
+      mimeType: 'text/csv',
+      buffer: Buffer.from('Well,WHP\nA-1,3200\nA-2,3185\n'),
+    }),
+  );
+  await page.getByRole('button', { name: 'Import CSV' }).click();
+
+  await expect(page.locator('[data-cell="A1"]')).toHaveText('Well');
+  await expect(page.locator('[data-cell="B1"]')).toHaveText('WHP');
+  await expect(page.locator('[data-cell="B2"]')).toHaveText('3200');
+  await expect(page.locator('[data-cell="A3"]')).toHaveText('A-2');
+});
+
 test('edit → formula → insert row → undo → export', async ({ page }) => {
   // 1. Enter values
   await editCell(page, 'A1', '10');

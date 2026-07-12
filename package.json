@@ -5,6 +5,7 @@
   "type": "module",
   "description": "AI_Office — an offline-first spreadsheet suite (built for self-learning and educational purposes).",
   "license": "MIT",
+  "author": "bishal110",
   "main": "electron/main.cjs",
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",

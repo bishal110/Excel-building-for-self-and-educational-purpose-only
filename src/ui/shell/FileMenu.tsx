@@ -33,7 +33,7 @@ export function FileMenu() {
   };
   const openProject = async () => {
     close();
-    const file = await pickFile('.aioffice,application/json');
+    const file = await pickFile('.aioffice,.json,application/json');
     if (!file) return;
     try {
       const ok = importSuite(JSON.parse(await file.text()));
