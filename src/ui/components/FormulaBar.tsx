@@ -19,13 +19,19 @@ export function FormulaBar() {
 
   return (
     <div className="formula-bar">
-      <div className="cell-ref" data-testid="cell-ref">
+      <div className="cell-ref" data-testid="cell-ref" title="Active cell" aria-label={`Active cell ${label}`}>
         {label}
       </div>
-      <span className="fx">fx</span>
+      <span className="formula-divider" aria-hidden="true" />
+      <span className="fx" aria-hidden="true">fx</span>
+      <label className="sr-only" htmlFor="formula-input">Formula or cell value</label>
       <input
+        id="formula-input"
         className="formula-input"
         data-testid="formula-input"
+        autoComplete="off"
+        spellCheck={false}
+        placeholder="Enter a value or formula"
         value={value}
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={(e) => {

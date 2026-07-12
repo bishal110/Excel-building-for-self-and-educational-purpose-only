@@ -142,6 +142,10 @@ export function Grid() {
       cells.push(
         <div
           key={c}
+          role="gridcell"
+          aria-colindex={c + 1}
+          aria-rowindex={r + 1}
+          aria-selected={inSel}
           className={
             'cell' +
             (inSel ? ' selected' : '') +
@@ -202,9 +206,10 @@ export function Grid() {
       );
     }
     return (
-      <div key={r}>
+      <div key={r} role="row">
         <div
-          className="row-header"
+          role="rowheader"
+          className={'row-header' + (r >= box.r1 && r <= box.r2 ? ' row-selected' : '')}
           style={{ left: scrollLeft, top: rowTop(r), width: ROW_HEADER_W }}
         >
           {r + 1}
@@ -225,12 +230,19 @@ export function Grid() {
       }}
       tabIndex={0}
       data-testid="grid"
+      role="grid"
+      aria-label="Spreadsheet grid"
+      aria-rowcount={rowCount}
+      aria-colcount={colCount}
+      aria-multiselectable="true"
     >
       <div className="grid-content" style={{ width: totalWidth, height: totalHeight }}>
         {/* Column header */}
         {Array.from({ length: colCount }, (_, c) => (
           <div
             key={'h' + c}
+            role="columnheader"
+            aria-colindex={c + 1}
             className={
               'col-head' +
               (c >= box.c1 && c <= box.c2 ? ' col-selected' : '') +
@@ -243,7 +255,13 @@ export function Grid() {
           </div>
         ))}
         {/* Corner */}
-        <div className="corner" style={{ left: scrollLeft, top: scrollTop, width: ROW_HEADER_W }} />
+        <button
+          className="corner"
+          style={{ left: scrollLeft, top: scrollTop, width: ROW_HEADER_W }}
+          title="Select all cells"
+          aria-label="Select all cells"
+          onClick={() => store.selectAll()}
+        />
         {rows}
         {/* Fill handle at the bottom-right of the selection (hidden while editing) */}
         {!store.editing && (

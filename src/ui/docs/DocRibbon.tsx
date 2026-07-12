@@ -1,5 +1,6 @@
 import type { Editor } from '@tiptap/react';
 import { sanitizeImageUrl, sanitizeLinkUrl } from '../security';
+import { Icon } from '../components/Icon';
 
 const FONTS = ['Default', 'Arial', 'Georgia', 'Times New Roman', 'Courier New'];
 
@@ -16,6 +17,8 @@ export function DocRibbon({
 }) {
   const active = (name: string, attrs?: Record<string, unknown>) =>
     editor.isActive(name, attrs) ? ' active' : '';
+  const alignmentActive = (align: 'left' | 'center' | 'right') =>
+    editor.isActive({ textAlign: align }) ? ' active' : '';
 
   const styleValue = editor.isActive('heading', { level: 1 })
     ? 'h1'
@@ -26,8 +29,8 @@ export function DocRibbon({
         : 'p';
 
   return (
-    <div className="toolbar" data-testid="doc-ribbon">
-      <div className="tb-group">
+    <div className="toolbar doc-toolbar" data-testid="doc-ribbon">
+      <div className="tb-group" aria-label="Text style">
         <select
           value={styleValue}
           data-testid="style-select"
@@ -57,32 +60,34 @@ export function DocRibbon({
         </select>
       </div>
 
-      <div className="tb-group">
-        <button className={active('bold')} data-testid="doc-bold" onClick={() => editor.chain().focus().toggleBold().run()} title="Bold (Ctrl+B)"><b>B</b></button>
-        <button className={active('italic')} onClick={() => editor.chain().focus().toggleItalic().run()} title="Italic (Ctrl+I)"><i>I</i></button>
-        <button className={active('underline')} onClick={() => editor.chain().focus().toggleUnderline().run()} title="Underline (Ctrl+U)"><u>U</u></button>
+      <div className="tb-group" aria-label="Font formatting">
+        <button className={`icon-btn${active('bold')}`} aria-pressed={editor.isActive('bold')} data-testid="doc-bold" onClick={() => editor.chain().focus().toggleBold().run()} title="Bold (Ctrl+B)"><b>B</b></button>
+        <button className={`icon-btn${active('italic')}`} aria-pressed={editor.isActive('italic')} onClick={() => editor.chain().focus().toggleItalic().run()} title="Italic (Ctrl+I)"><i>I</i></button>
+        <button className={`icon-btn${active('underline')}`} aria-pressed={editor.isActive('underline')} onClick={() => editor.chain().focus().toggleUnderline().run()} title="Underline (Ctrl+U)"><u>U</u></button>
       </div>
 
-      <div className="tb-group">
-        <button className={active('bulletList')} onClick={() => editor.chain().focus().toggleBulletList().run()} title="Bullet list">• List</button>
-        <button className={active('orderedList')} onClick={() => editor.chain().focus().toggleOrderedList().run()} title="Numbered list">1. List</button>
+      <div className="tb-group" aria-label="Lists">
+        <button className={`tool-btn${active('bulletList')}`} aria-pressed={editor.isActive('bulletList')} onClick={() => editor.chain().focus().toggleBulletList().run()} title="Bullet list"><Icon name="bulletList" />Bullets</button>
+        <button className={`tool-btn${active('orderedList')}`} aria-pressed={editor.isActive('orderedList')} onClick={() => editor.chain().focus().toggleOrderedList().run()} title="Numbered list"><Icon name="numberedList" />Numbering</button>
       </div>
 
-      <div className="tb-group">
-        <button className={active({ textAlign: 'left' } as never)} onClick={() => editor.chain().focus().setTextAlign('left').run()} title="Align left">⯇</button>
-        <button onClick={() => editor.chain().focus().setTextAlign('center').run()} title="Align center">≡</button>
-        <button onClick={() => editor.chain().focus().setTextAlign('right').run()} title="Align right">⯈</button>
+      <div className="tb-group" aria-label="Paragraph alignment">
+        <button className={`icon-btn${alignmentActive('left')}`} aria-pressed={editor.isActive({ textAlign: 'left' })} onClick={() => editor.chain().focus().setTextAlign('left').run()} title="Align left"><Icon name="alignLeft" /></button>
+        <button className={`icon-btn${alignmentActive('center')}`} aria-pressed={editor.isActive({ textAlign: 'center' })} onClick={() => editor.chain().focus().setTextAlign('center').run()} title="Align center"><Icon name="alignCenter" /></button>
+        <button className={`icon-btn${alignmentActive('right')}`} aria-pressed={editor.isActive({ textAlign: 'right' })} onClick={() => editor.chain().focus().setTextAlign('right').run()} title="Align right"><Icon name="alignRight" /></button>
       </div>
 
-      <div className="tb-group">
+      <div className="tb-group" aria-label="Insert">
         <button
+          className="tool-btn"
           data-testid="insert-table"
           onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
           title="Insert table"
         >
-          Table
+          <Icon name="table" />Table
         </button>
         <button
+          className="tool-btn"
           onClick={() => {
             const url = prompt('Image URL');
             if (!url) return;
@@ -92,9 +97,10 @@ export function DocRibbon({
           }}
           title="Insert image"
         >
-          Image
+          <Icon name="image" />Image
         </button>
         <button
+          className="tool-btn"
           onClick={() => {
             const url = prompt('Link URL');
             if (!url) {
@@ -107,11 +113,13 @@ export function DocRibbon({
           }}
           title="Insert link"
         >
-          Link
+          <Icon name="link" />Link
         </button>
       </div>
 
-      <div className="tb-group">
+      <span className="toolbar-spacer" />
+      <div className="tb-group export-group" aria-label="Export">
+        <Icon name="download" className="select-leading-icon" />
         <select
           data-testid="export-select"
           value=""
@@ -128,7 +136,7 @@ export function DocRibbon({
           <option value="html">Web page (.html)</option>
           <option value="txt">Plain text (.txt)</option>
         </select>
-        <button onClick={onPrint}>Print / PDF</button>
+        <button className="tool-btn" onClick={onPrint}><Icon name="print" />Print / PDF</button>
       </div>
     </div>
   );

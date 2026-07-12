@@ -1,5 +1,6 @@
 import { store } from '../state/store';
 import { useStoreVersion } from '../state/useStore';
+import { Icon } from './Icon';
 
 export function SheetTabs() {
   useStoreVersion();
@@ -12,6 +13,8 @@ export function SheetTabs() {
         <button
           key={i}
           className={'sheet-tab' + (i === active ? ' active' : '')}
+          aria-pressed={i === active}
+          title="Double-click to rename sheet"
           onClick={() => store.setActiveSheet(i)}
           onDoubleClick={() => {
             const next = prompt('Rename sheet', name);
@@ -39,8 +42,8 @@ export function SheetTabs() {
           )}
         </button>
       ))}
-      <button className="sheet-add" title="Add sheet" onClick={() => store.addSheet()}>
-        +
+      <button className="sheet-add" title="Add sheet" aria-label="Add sheet" onClick={() => store.addSheet()}>
+        <Icon name="plus" size={15} />
       </button>
     </div>
   );

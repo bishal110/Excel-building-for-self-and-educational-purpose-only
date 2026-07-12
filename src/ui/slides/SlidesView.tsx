@@ -4,6 +4,7 @@ import { useSlidesVersion } from './useSlides';
 import { SlideList } from './SlideList';
 import { SlideContent, themeClass } from './SlideThumb';
 import { PresentMode } from './PresentMode';
+import { Icon } from '../components/Icon';
 
 const LAYOUTS: { key: SlideLayout; label: string }[] = [
   { key: 'title', label: 'Title' },
@@ -20,12 +21,12 @@ export function SlidesView() {
   return (
     <>
       <div className="toolbar" data-testid="slides-toolbar">
-        <div className="tb-group">
-          <button data-testid="add-slide" onClick={() => slidesStore.addSlide()}>+ Slide</button>
-          <button onClick={() => slidesStore.duplicateSlide(slide.id)}>Duplicate</button>
-          <button data-testid="delete-slide" onClick={() => slidesStore.deleteSlide(slide.id)}>Delete</button>
+        <div className="tb-group" aria-label="Slides">
+          <button className="tool-btn" data-testid="add-slide" onClick={() => slidesStore.addSlide()}><Icon name="plus" />New slide</button>
+          <button className="tool-btn" onClick={() => slidesStore.duplicateSlide(slide.id)}><Icon name="duplicate" />Duplicate</button>
+          <button className="tool-btn quiet-danger" data-testid="delete-slide" onClick={() => slidesStore.deleteSlide(slide.id)}><Icon name="trash" />Delete</button>
         </div>
-        <div className="tb-group">
+        <div className="tb-group" aria-label="Slide design">
           <select
             data-testid="layout-select"
             value={slide.layout}
@@ -47,20 +48,36 @@ export function SlidesView() {
             ))}
           </select>
         </div>
-        <div className="tb-group">
-          <button className="primary" data-testid="present" onClick={() => setPresenting(true)}>▶ Present</button>
-          <button onClick={() => window.print()}>Export PDF</button>
+        <span className="toolbar-spacer" />
+        <div className="tb-group export-group" aria-label="Present and export">
+          <button className="primary tool-btn" data-testid="present" onClick={() => setPresenting(true)}><Icon name="play" />Present</button>
+          <button className="tool-btn" onClick={() => window.print()}><Icon name="download" />Export PDF</button>
         </div>
       </div>
 
       <div className="slides-workspace">
         <SlideList />
         <div className="slide-editor">
-          <div className={`slide-canvas ${themeClass(theme)}`} data-testid="slide-canvas">
-            <SlideContent slide={slide} />
-          </div>
+          <section className="slide-stage" aria-label="Slide canvas">
+            <div className="slide-stage-header">
+              <span>Canvas</span>
+              <span>Slide {slidesStore.activeIndex() + 1} · 16:9</span>
+            </div>
+            <div className={`slide-canvas ${themeClass(theme)}`} data-testid="slide-canvas">
+              <SlideContent slide={slide} />
+            </div>
+          </section>
           <SlideFields />
         </div>
+      </div>
+
+      <div className="status-bar" data-testid="slides-status">
+        <span className="status-ready"><span className="status-dot" />Ready</span>
+        <span className="status-divider" aria-hidden="true" />
+        <span>Slide {slidesStore.activeIndex() + 1} of {slidesStore.slides().length}</span>
+        <span className="spacer" />
+        <span className="status-local" title="Changes are stored on this device"><Icon name="local" size={13} />Local autosave</span>
+        <span className="status-module">Slides</span>
       </div>
 
       {/* Print-only: every slide, one per page */}
@@ -80,9 +97,13 @@ export function SlidesView() {
 function SlideFields() {
   const slide = slidesStore.active();
   return (
-    <div className="slide-fields" data-testid="slide-fields">
+    <aside className="slide-fields" data-testid="slide-fields" aria-label="Slide properties">
+      <div className="inspector-header">
+        <span className="inspector-kicker">Properties</span>
+        <strong>Slide details</strong>
+      </div>
       <label>
-        Title
+        <span>Title</span>
         <input
           data-testid="field-title"
           value={slide.title}
@@ -91,7 +112,7 @@ function SlideFields() {
       </label>
       {slide.layout === 'image' ? (
         <label>
-          Image URL
+          <span>Image URL</span>
           <input
             data-testid="field-image"
             value={slide.image}
@@ -101,7 +122,7 @@ function SlideFields() {
         </label>
       ) : (
         <label>
-          Body
+          <span>Body</span>
           <textarea
             data-testid="field-body"
             value={slide.body}
@@ -111,7 +132,7 @@ function SlideFields() {
         </label>
       )}
       <label>
-        Speaker notes
+        <span>Speaker notes</span>
         <textarea
           data-testid="field-notes"
           value={slide.notes}
@@ -120,6 +141,6 @@ function SlideFields() {
           onChange={(e) => slidesStore.updateActive({ notes: e.target.value })}
         />
       </label>
-    </div>
+    </aside>
   );
 }
