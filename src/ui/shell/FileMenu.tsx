@@ -63,10 +63,10 @@ export function FileMenu({
         const rows = await readXlsx(file);
         if (rows.length === 0) return alert('That workbook appears to be empty.');
         onSwitchModule('sheets');
-        store.importRows(rows);
+        store.openRows(rows, file.name);
       } else if (ext === 'csv' || ext === 'txt' || ext === 'tsv') {
         onSwitchModule('sheets');
-        store.importRows(parseCsv(await file.text()));
+        store.openRows(parseCsv(await file.text()), file.name);
       } else {
         alert(`Unsupported file type: .${ext}`);
       }

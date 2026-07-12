@@ -267,3 +267,22 @@ screenshots at 360/768/1366 px (0 px horizontal overflow at all three).
 - **Test**: `e2e/sheets.spec.ts` → "PivotTable summarizes a selection into a
   new sheet"; `e2e/audit.spec.ts` navigates every ribbon tab and clicks every
   control with zero runtime errors.
+
+### BUG-016 — File → Open merged onto the current sheet (stale cells, silent overwrite)
+- **Symptom**: Opening a file wrote its cells over the active sheet without
+  clearing it first. Opening a small file after a large one left the large
+  file's tail cells behind (a confusing merge); opening any file silently
+  overwrote whatever was already on that sheet, with no way to keep both.
+- **Root cause**: `FileMenu` called `store.importRows()`, a raw
+  write-at-offset primitive with no notion of "replace" — it never cleared the
+  target and never protected existing data.
+- **Fix**: New `store.openRows(rows, fileName)` with true Open semantics —
+  load into the active sheet **only when it is empty** (and rename it after the
+  file), otherwise load into a **fresh sheet named after the file**. It never
+  merges over existing cells and never discards them, so a second Open can't
+  destroy the first file. Sheet names are derived safely (`sheetNameFromFile`:
+  strips the extension and Excel's illegal `: \ / ? * [ ]`, caps at 31 chars)
+  and de-duplicated (`report`, `report (2)`).
+- **Test**: `src/ui/state/edgecases.test.ts` — five cases (empty-sheet reuse,
+  no-merge on second open, name collision, no stale tail cells, name
+  derivation). The existing "import a real CSV" E2E still passes end-to-end.

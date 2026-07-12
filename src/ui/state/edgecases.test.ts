@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Store } from './store';
+import { Store, sheetNameFromFile } from './store';
 import { isError } from '../../engine';
 
 describe('AUDIT: edge cases (safety)', () => {
@@ -48,6 +48,62 @@ describe('AUDIT: edge cases (safety)', () => {
     expect(() => s.undo()).not.toThrow();
     expect(() => s.redo()).not.toThrow();
     expect(s.canUndo()).toBe(false);
+  });
+
+  it('opening a file into an empty sheet fills it and names it after the file', () => {
+    const s = new Store();
+    const name = s.openRows(
+      [
+        ['Well', 'WHP'],
+        ['A-1', '3200'],
+      ],
+      'wells.csv',
+    );
+    expect(name).toBe('wells');
+    expect(s.sheetNames()).toEqual(['wells']); // reused the empty Sheet1
+    expect(s.getValue(0, 0)).toBe('Well');
+    expect(s.getValue(1, 1)).toBe(3200);
+  });
+
+  it('opening a second file never merges into or discards the first', () => {
+    const s = new Store();
+    s.openRows([['first']], 'a.csv');
+    s.openRows([['second']], 'b.csv');
+    // The second file lands in its own sheet; the first is untouched.
+    expect(s.sheetNames()).toEqual(['a', 'b']);
+    expect(s.activeIndex()).toBe(1);
+    expect(s.getValue(0, 0)).toBe('second'); // active = b
+    s.setActiveSheet(0);
+    expect(s.getValue(0, 0)).toBe('first'); // a preserved
+  });
+
+  it('opening a file whose name collides gets a distinct sheet name', () => {
+    const s = new Store();
+    s.openRows([['x']], 'report.csv');
+    s.openRows([['y']], 'report.xlsx');
+    expect(s.sheetNames()).toEqual(['report', 'report (2)']);
+  });
+
+  it('opening does not leave stale cells from a larger prior file', () => {
+    const s = new Store();
+    // A big file, then a small one — the small one must not show the big one's tail.
+    s.openRows(
+      [
+        ['a', 'b', 'c'],
+        ['d', 'e', 'f'],
+      ],
+      'big.csv',
+    );
+    s.openRows([['solo']], 'small.csv');
+    expect(s.getValue(0, 0)).toBe('solo');
+    expect(s.getValue(2, 1)).toBe(null); // no leftover 'f' from big.csv
+  });
+
+  it('sheetNameFromFile strips the extension and illegal characters', () => {
+    expect(sheetNameFromFile('Q3 Report.xlsx')).toBe('Q3 Report');
+    expect(sheetNameFromFile('a/b:c*d.csv')).toBe('a b c d');
+    expect(sheetNameFromFile('.csv')).toBe('Sheet'); // empty stem falls back
+    expect(sheetNameFromFile('x'.repeat(40) + '.csv').length).toBe(31); // 31-char cap
   });
 
   it('pasting a 3x3 block at the far grid edge does not crash', () => {

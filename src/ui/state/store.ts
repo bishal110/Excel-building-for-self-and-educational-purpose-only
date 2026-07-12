@@ -56,6 +56,14 @@ export function selectionBox(sel: Selection): RangeBox {
   };
 }
 
+/** Derive a valid, trimmed sheet name from a file name (Excel's rules: no
+ *  `: \ / ? * [ ]`, non-empty, at most 31 chars). */
+export function sheetNameFromFile(fileName: string): string {
+  const stem = fileName.replace(/\.[^.]+$/, '');
+  const cleaned = stem.replace(/[:\\/?*[\]]/g, ' ').replace(/\s+/g, ' ').trim();
+  return (cleaned || 'Sheet').slice(0, 31);
+}
+
 export class Store {
   private wb = new Workbook();
   private metas: SheetMeta[] = [emptyMeta()];
@@ -530,6 +538,44 @@ export class Store {
         cols.forEach((raw, c) => s.setRaw(startCol + c, startRow + r, raw));
       });
     });
+  }
+
+  /**
+   * Open imported rows as a file: load them into the active sheet when it is
+   * empty (renamed after the file), otherwise into a fresh sheet named after
+   * the file. Never merges over existing cells and never discards them, so a
+   * user can open a second file without losing the first. Returns the sheet
+   * name shown.
+   */
+  openRows(rows: string[][], fileName: string): string {
+    let name = '';
+    this.mutate(() => {
+      const base = sheetNameFromFile(fileName);
+      const active = this.activeSheet();
+      const isEmpty = active.entries().length === 0;
+      let target = active;
+      if (isEmpty) {
+        name = this.uniqueSheetName(base, this.wb.activeIndex);
+        this.wb.renameSheet(this.wb.activeIndex, name);
+      } else {
+        name = this.uniqueSheetName(base, -1);
+        target = this.wb.addSheet(name);
+        this.metas.push(emptyMeta());
+        this.wb.activeIndex = this.wb.sheetCount - 1;
+      }
+      rows.forEach((cols, r) => cols.forEach((raw, c) => target.setRaw(c, r, raw)));
+      this.clampSelection();
+    });
+    return name;
+  }
+
+  /** A sheet name unique among all sheets except the one at `exceptIndex`. */
+  private uniqueSheetName(base: string, exceptIndex: number): string {
+    const taken = new Set(this.wb.sheetNames().filter((_, i) => i !== exceptIndex));
+    if (!taken.has(base)) return base;
+    let i = 2;
+    while (taken.has(`${base} (${i})`)) i++;
+    return `${base} (${i})`;
   }
   exportRows(): string[][] {
     const b = this.usedBounds();
