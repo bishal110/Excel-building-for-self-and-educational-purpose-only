@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { store, selectionBox } from '../state/store';
+import { DialogFrame } from './DialogFrame';
 
 type ChartType = 'line' | 'bar';
 
@@ -34,12 +35,7 @@ export function ChartBuilder({ onClose }: { onClose: () => void }) {
   const y = (v: number) => PAD + plotH - ((v - min) / span) * plotH;
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <header>
-          <h2>Chart builder</h2>
-          <button onClick={onClose}>×</button>
-        </header>
+    <DialogFrame title="Chart builder" onClose={onClose}>
         <div className="chart-controls">
           <label>
             <input
@@ -66,13 +62,14 @@ export function ChartBuilder({ onClose }: { onClose: () => void }) {
             Select a range containing numbers to build a chart.
           </p>
         ) : (
-          <svg width={W} height={H} className="chart-svg" data-testid="chart-svg">
+          <svg width={W} height={H} className="chart-svg" data-testid="chart-svg" role="img" aria-label={`${type} chart with ${series.length} data points`}>
+            <title>{type === 'line' ? 'Line' : 'Bar'} chart of the selected data</title>
             <line x1={PAD} y1={PAD + plotH} x2={W - PAD} y2={PAD + plotH} stroke="#94a3b8" />
             <line x1={PAD} y1={PAD} x2={PAD} y2={PAD + plotH} stroke="#94a3b8" />
             {type === 'line' && (
               <polyline
                 fill="none"
-                stroke="#2563eb"
+                stroke="var(--accent)"
                 strokeWidth={2}
                 points={series.map((s, i) => `${x(i)},${y(s.value)}`).join(' ')}
               />
@@ -87,7 +84,7 @@ export function ChartBuilder({ onClose }: { onClose: () => void }) {
                     y={y(s.value)}
                     width={bw}
                     height={PAD + plotH - y(s.value)}
-                    fill="#2563eb"
+                    fill="var(--accent)"
                   />
                 );
               })}
@@ -98,7 +95,6 @@ export function ChartBuilder({ onClose }: { onClose: () => void }) {
             ))}
           </svg>
         )}
-      </div>
-    </div>
+    </DialogFrame>
   );
 }

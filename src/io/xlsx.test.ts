@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import * as XLSX from 'xlsx';
-import { readXlsx, readXlsxWorkbook, writeXlsx } from './xlsx';
+import { readXlsx, readXlsxWorkbook, writeXlsx, writeXlsxWorkbook } from './xlsx';
 
 describe('xlsx round-trip', () => {
   it('preserves text, numbers, and formulas', async () => {
@@ -36,5 +36,16 @@ describe('xlsx round-trip', () => {
     expect(sheets.map((s) => s.name)).toEqual(['January', 'February']);
     expect(sheets[0]!.rows[0]).toEqual(['Jan']);
     expect(sheets[1]!.rows[1]).toEqual(['20']);
+  });
+
+  it('writes every worksheet instead of silently exporting only the active one', async () => {
+    const blob = writeXlsxWorkbook([
+      { name: 'January', rows: [['Month', 'Value'], ['Jan', '10']] },
+      { name: 'February', rows: [['Month', 'Value'], ['Feb', '=10*2']] },
+    ]);
+    const sheets = await readXlsxWorkbook(blob as unknown as File);
+    expect(sheets.map((sheet) => sheet.name)).toEqual(['January', 'February']);
+    expect(sheets[0]!.rows[1]).toEqual(['Jan', '10']);
+    expect(sheets[1]!.rows[1]).toEqual(['Feb', '=10*2']);
   });
 });

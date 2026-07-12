@@ -11,7 +11,7 @@
 
 | Capability | Microsoft Office | AI_Office | Verdict |
 |---|---|---|---|
-| Formula engine core (parse/evaluate/errors) | ✅ | ✅ 73 functions, Excel-parity semantics | **Replicated** — the "skeleton" is genuinely here |
+| Formula engine core (parse/evaluate/errors) | ✅ | ✅ 144 functions, Excel-style semantics | **Replicated in part** — the educational skeleton is genuinely here |
 | Function library breadth | ~500 functions | 73 | **Partial** — the *long tail* (statistical, financial, engineering) is sheer volume, addable over time |
 | Recalculation at scale | Millions of cells, multithreaded native code | 10k cells fast; single-threaded JS | **Partial** — architecture is right (dependency-ordered), raw horsepower isn't |
 | Grid UX (edit, undo, freeze, formats, sort) | ✅ | ✅ | **Replicated** at core level |

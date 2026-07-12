@@ -16,6 +16,7 @@ import { docToMarkdown, docToStandaloneHtml } from '../../io/markdown';
 import { textStats } from '../../io/wordCount';
 import { downloadBlob } from '../fileUtils';
 import { DocRibbon, type DocExportFormat } from './DocRibbon';
+import { Icon } from '../components/Icon';
 
 const DOC_KEY = 'ai-office:doc';
 
@@ -103,15 +104,22 @@ export function DocsView() {
     <>
       <DocRibbon editor={editor} onExport={exportAs} onPrint={() => window.print()} />
       <div className="doc-scroll">
-        <div className="doc-page" data-testid="doc-page">
-          <EditorContent editor={editor} />
+        <div className="doc-page-shell">
+          <div className="doc-ruler" aria-hidden="true" />
+          <div className="doc-page" data-testid="doc-page">
+            <EditorContent editor={editor} />
+          </div>
         </div>
       </div>
       <div className="status-bar" data-testid="doc-status">
+        <span className="status-ready"><span className="status-dot" />Ready</span>
+        <span className="status-divider" aria-hidden="true" />
+        <span>Page 1 of 1</span>
         <span data-testid="word-count">Words: {stats.words}</span>
         <span>Characters: {stats.characters}</span>
         <span className="spacer" />
-        <span>AI_Office · Docs</span>
+        <span className="status-local" title="Changes are stored on this device"><Icon name="local" size={13} />Local autosave</span>
+        <span className="status-module">Docs</span>
       </div>
     </>
   );

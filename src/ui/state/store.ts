@@ -5,6 +5,7 @@ import {
   offsetFormula,
 } from '../../engine';
 import { PRESETS } from '../../engine/format/numberFormat';
+import type { Sheet } from '../../engine/grid/sheet';
 import { insertRows, deleteRows, insertCols, deleteCols } from '../../engine/grid/mutations';
 import { findReplace, sortRange } from '../../engine/grid/ops';
 import { pivotGrid, type PivotConfig } from '../../engine/grid/pivot';
@@ -144,9 +145,13 @@ export class Store {
   }
 
   usedBounds(): RangeBox {
+    return this.usedBoundsForSheet(this.activeSheet());
+  }
+
+  private usedBoundsForSheet(sheet: Sheet): RangeBox {
     let c2 = 0;
     let r2 = 0;
-    for (const [c, r] of this.activeSheet().entries()) {
+    for (const [c, r] of sheet.entries()) {
       if (c > c2) c2 = c;
       if (r > r2) r2 = r;
     }
@@ -677,9 +682,20 @@ export class Store {
   }
   /** Raw contents (formulas kept as "=…") for lossless .xlsx export. */
   exportRowsRaw(): string[][] {
-    const b = this.usedBounds();
+    return this.exportSheetRowsRaw(this.activeSheet());
+  }
+
+  /** Every worksheet and its raw contents for lossless multi-sheet export. */
+  exportWorkbookRaw(): { name: string; rows: string[][] }[] {
+    return this.sheetNames().map((name, index) => ({
+      name,
+      rows: this.exportSheetRowsRaw(this.wb.sheetAt(index)!),
+    }));
+  }
+
+  private exportSheetRowsRaw(s: Sheet): string[][] {
+    const b = this.usedBoundsForSheet(s);
     const rows: string[][] = [];
-    const s = this.activeSheet();
     for (let r = 0; r <= b.r2; r++) {
       const row: string[] = [];
       for (let c = 0; c <= b.c2; c++) row.push(s.getRaw(c, r));

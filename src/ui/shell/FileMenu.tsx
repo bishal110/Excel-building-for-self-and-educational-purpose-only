@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { exportSuite, importSuite, newSuite } from '../../io/suiteProject';
 import { parseCsv, toCsv } from '../../io/csv';
-import { readXlsxWorkbook, writeXlsx } from '../../io/xlsx';
+import { readXlsxWorkbook, writeXlsxWorkbook } from '../../io/xlsx';
 import { store } from '../state/store';
 import { downloadBlob, pickFile } from '../fileUtils';
+import { Icon } from '../components/Icon';
 
 type Module = 'sheets' | 'docs' | 'slides';
 
@@ -81,7 +82,7 @@ export function FileMenu({
   };
   const saveXlsx = () => {
     downloadBlob(
-      writeXlsx(store.exportRowsRaw()),
+      writeXlsxWorkbook(store.exportWorkbookRaw()),
       'workbook.xlsx',
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     );
@@ -96,24 +97,49 @@ export function FileMenu({
 
   return (
     <div className="file-menu" ref={ref}>
-      <button className="file-btn" data-testid="file-menu" onClick={() => setOpen((v) => !v)}>
-        File ▾
+      <button
+        className="file-btn"
+        data-testid="file-menu"
+        aria-expanded={open}
+        aria-haspopup="menu"
+        onClick={() => setOpen((v) => !v)}
+      >
+        <Icon name="file" />
+        <span>File</span>
+        <Icon name="chevronDown" size={13} />
       </button>
       {open && (
-        <div className="file-dropdown" role="menu">
-          <button role="menuitem" data-testid="file-new" onClick={newProject}>New</button>
-          <button role="menuitem" data-testid="file-open" onClick={openFile}>Open…  (Excel, CSV, or project)</button>
+        <div className="file-dropdown" role="menu" aria-label="File actions">
+          <button role="menuitem" data-testid="file-new" onClick={newProject}>
+            <span className="menu-item-icon"><Icon name="plus" /></span>
+            <span className="menu-item-copy"><strong>New workspace</strong><small>Start with a clean local project</small></span>
+          </button>
+          <button role="menuitem" data-testid="file-open" onClick={openFile}>
+            <span className="menu-item-icon"><Icon name="file" /></span>
+            <span className="menu-item-copy"><strong>Open</strong><small>Excel, CSV, or AI Office project</small></span>
+          </button>
+          <div className="menu-separator" />
           <div
             className="file-submenu-parent"
             onMouseEnter={() => setSaveAsOpen(true)}
             onMouseLeave={() => setSaveAsOpen(false)}
           >
-            <button role="menuitem" data-testid="file-saveas">Save As ▸</button>
+            <button
+              role="menuitem"
+              data-testid="file-saveas"
+              aria-expanded={saveAsOpen}
+              aria-haspopup="menu"
+              onClick={() => setSaveAsOpen((v) => !v)}
+            >
+              <span className="menu-item-icon"><Icon name="download" /></span>
+              <span className="menu-item-copy"><strong>Save as</strong><small>Choose a local file format</small></span>
+              <Icon name="chevronRight" size={14} />
+            </button>
             {saveAsOpen && (
-              <div className="file-submenu">
-                <button data-testid="save-project" onClick={saveProject}>AI_Office project (.aioffice)</button>
-                <button data-testid="save-xlsx" disabled={!inSheets} onClick={saveXlsx}>Excel workbook (.xlsx)</button>
-                <button data-testid="save-csv" disabled={!inSheets} onClick={saveCsv}>CSV (.csv)</button>
+              <div className="file-submenu" role="menu" aria-label="Save formats">
+                <button role="menuitem" data-testid="save-project" onClick={saveProject}>AI Office project <span>.aioffice</span></button>
+                <button role="menuitem" data-testid="save-xlsx" disabled={!inSheets} onClick={saveXlsx}>Excel workbook <span>.xlsx</span></button>
+                <button role="menuitem" data-testid="save-csv" disabled={!inSheets} onClick={saveCsv}>Comma-separated values <span>.csv</span></button>
               </div>
             )}
           </div>

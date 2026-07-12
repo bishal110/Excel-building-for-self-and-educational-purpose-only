@@ -51,8 +51,8 @@ export async function readXlsxWorkbook(
   return out;
 }
 
-/** Build an .xlsx Blob from a grid of raw strings (formulas start with '='). */
-export function writeXlsx(rows: string[][], sheetName = 'Sheet1'): Blob {
+/** Build a SheetJS worksheet from raw strings (formulas start with '='). */
+function rowsToWorksheet(rows: string[][]): XLSX.WorkSheet {
   const ws: XLSX.WorkSheet = {};
   let maxC = 0;
   rows.forEach((cols, r) => {
@@ -74,10 +74,27 @@ export function writeXlsx(rows: string[][], sheetName = 'Sheet1'): Blob {
     s: { r: 0, c: 0 },
     e: { r: Math.max(0, rows.length - 1), c: maxC },
   });
+  return ws;
+}
+
+/** Build an .xlsx Blob from every sheet in a workbook. */
+export function writeXlsxWorkbook(
+  sheets: { name: string; rows: string[][] }[],
+): Blob {
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, sheetName);
+  const source = sheets.length > 0 ? sheets : [{ name: 'Sheet1', rows: [['']] }];
+  source.forEach((sheet, index) => {
+    const fallback = `Sheet${index + 1}`;
+    const name = (sheet.name.trim() || fallback).slice(0, 31);
+    XLSX.utils.book_append_sheet(wb, rowsToWorksheet(sheet.rows), name);
+  });
   const out = XLSX.write(wb, { type: 'array', bookType: 'xlsx' }) as ArrayBuffer;
   return new Blob([out], {
     type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   });
+}
+
+/** Build a one-sheet .xlsx Blob. Kept for simple exports and API compatibility. */
+export function writeXlsx(rows: string[][], sheetName = 'Sheet1'): Blob {
+  return writeXlsxWorkbook([{ name: sheetName, rows }]);
 }

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { store } from '../state/store';
+import { DialogFrame } from './DialogFrame';
 
 const SAMPLES: Record<string, string> = {
   'Double column A → B': `// Double each value in A1:A10 into column B
@@ -30,12 +31,11 @@ export function MacroEditor({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <header>
-          <h2>Macros (JavaScript, Office-Scripts style)</h2>
-          <button onClick={onClose}>×</button>
-        </header>
+    <DialogFrame title="Macros (JavaScript, Office-Scripts style)" onClose={onClose}>
+        <div className="macro-warning" role="note">
+          <strong>Experimental automation</strong>
+          Only run code you trust. Macros execute locally and a long-running script can make this window unresponsive.
+        </div>
         <div className="macro-samples">
           Samples:
           {Object.keys(SAMPLES).map((name) => (
@@ -64,7 +64,6 @@ export function MacroEditor({ onClose }: { onClose: () => void }) {
           Macros are JavaScript with a documented <code>sheet</code> API — not
           VBA. See docs/MACRO_API.md.
         </p>
-      </div>
-    </div>
+    </DialogFrame>
   );
 }

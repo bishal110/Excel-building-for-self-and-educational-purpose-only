@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { PRESETS } from '../../engine/format/numberFormat';
 import { store, selectionBox } from '../state/store';
 import { useStoreVersion } from '../state/useStore';
+import { Icon } from './Icon';
 
 const FORMAT_OPTIONS: { key: string; label: string }[] = [
   { key: 'general', label: 'General' },
@@ -29,6 +30,7 @@ export function SheetsRibbon({
   useStoreVersion();
   const [tab, setTab] = useState<Tab>('home');
   const box = selectionBox(store.selection);
+  const currentStyle = store.getStyle(box.c1, box.r1);
 
   const findReplace = () => {
     const find = prompt('Find what?');
@@ -47,6 +49,8 @@ export function SheetsRibbon({
             role="tab"
             data-testid={`ribbon-tab-${t}`}
             className={'ribbon-tab' + (tab === t ? ' active' : '')}
+            aria-selected={tab === t}
+            aria-controls="sheets-ribbon-panel"
             onClick={() => setTab(t)}
           >
             {t[0]!.toUpperCase() + t.slice(1)}
@@ -54,27 +58,27 @@ export function SheetsRibbon({
         ))}
       </div>
 
-      <div className="ribbon-body" data-testid="toolbar">
+      <div className="ribbon-body" data-testid="toolbar" id="sheets-ribbon-panel" role="tabpanel">
         {tab === 'home' && (
           <>
             <Group label="Undo">
-              <button disabled={!store.canUndo()} onClick={() => store.undo()} title="Undo (Ctrl+Z)">↶</button>
-              <button disabled={!store.canRedo()} onClick={() => store.redo()} title="Redo (Ctrl+Y)">↷</button>
+              <button className="icon-btn" aria-label="Undo" disabled={!store.canUndo()} onClick={() => store.undo()} title="Undo (Ctrl+Z)"><Icon name="undo" /></button>
+              <button className="icon-btn" aria-label="Redo" disabled={!store.canRedo()} onClick={() => store.redo()} title="Redo (Ctrl+Y)"><Icon name="redo" /></button>
             </Group>
             <Group label="Clipboard">
-              <button onClick={() => store.copy(true)} title="Cut (Ctrl+X)">✂</button>
-              <button onClick={() => store.copy()} title="Copy (Ctrl+C)">⧉</button>
-              <button onClick={() => store.paste()} title="Paste (Ctrl+V)">📋</button>
+              <button className="icon-btn" aria-label="Cut" onClick={() => store.copy(true)} title="Cut (Ctrl+X)"><Icon name="cut" /></button>
+              <button className="icon-btn" aria-label="Copy" onClick={() => store.copy()} title="Copy (Ctrl+C)"><Icon name="copy" /></button>
+              <button className="icon-btn" aria-label="Paste" onClick={() => store.paste()} title="Paste (Ctrl+V)"><Icon name="paste" /></button>
             </Group>
             <Group label="Font">
-              <button onClick={() => store.toggleStyle('bold')} title="Bold (Ctrl+B)"><b>B</b></button>
-              <button onClick={() => store.toggleStyle('italic')} title="Italic (Ctrl+I)"><i>I</i></button>
-              <button onClick={() => store.toggleStyle('underline')} title="Underline (Ctrl+U)"><u>U</u></button>
+              <button className={currentStyle?.bold ? 'icon-btn active' : 'icon-btn'} aria-pressed={!!currentStyle?.bold} onClick={() => store.toggleStyle('bold')} title="Bold (Ctrl+B)"><b>B</b></button>
+              <button className={currentStyle?.italic ? 'icon-btn active' : 'icon-btn'} aria-pressed={!!currentStyle?.italic} onClick={() => store.toggleStyle('italic')} title="Italic (Ctrl+I)"><i>I</i></button>
+              <button className={currentStyle?.underline ? 'icon-btn active' : 'icon-btn'} aria-pressed={!!currentStyle?.underline} onClick={() => store.toggleStyle('underline')} title="Underline (Ctrl+U)"><u>U</u></button>
             </Group>
             <Group label="Alignment">
-              <button onClick={() => store.applyStyle({ align: 'left' })} title="Align left">⯇</button>
-              <button onClick={() => store.applyStyle({ align: 'center' })} title="Align center">≡</button>
-              <button onClick={() => store.applyStyle({ align: 'right' })} title="Align right">⯈</button>
+              <button className={currentStyle?.align === 'left' ? 'icon-btn active' : 'icon-btn'} aria-pressed={currentStyle?.align === 'left'} onClick={() => store.applyStyle({ align: 'left' })} title="Align left"><Icon name="alignLeft" /></button>
+              <button className={currentStyle?.align === 'center' ? 'icon-btn active' : 'icon-btn'} aria-pressed={currentStyle?.align === 'center'} onClick={() => store.applyStyle({ align: 'center' })} title="Align center"><Icon name="alignCenter" /></button>
+              <button className={currentStyle?.align === 'right' ? 'icon-btn active' : 'icon-btn'} aria-pressed={currentStyle?.align === 'right'} onClick={() => store.applyStyle({ align: 'right' })} title="Align right"><Icon name="alignRight" /></button>
             </Group>
             <Group label="Number">
               <select
@@ -91,14 +95,14 @@ export function SheetsRibbon({
               </select>
             </Group>
             <Group label="Cells">
-              <button onClick={() => store.insertRowAt(box.r1)} data-testid="insert-row">Insert row</button>
-              <button onClick={() => store.insertColAt(box.c1)}>Insert col</button>
-              <button onClick={() => store.deleteRowAt(box.r1)}>Delete row</button>
-              <button onClick={() => store.deleteColAt(box.c1)}>Delete col</button>
+              <button className="tool-btn" onClick={() => store.insertRowAt(box.r1)} data-testid="insert-row"><Icon name="insertRow" />Insert row</button>
+              <button className="tool-btn" onClick={() => store.insertColAt(box.c1)}><Icon name="insertColumn" />Insert column</button>
+              <button className="tool-btn quiet-danger" onClick={() => store.deleteRowAt(box.r1)}><Icon name="trash" />Delete row</button>
+              <button className="tool-btn quiet-danger" onClick={() => store.deleteColAt(box.c1)}><Icon name="trash" />Delete column</button>
             </Group>
             <Group label="Editing">
-              <button onClick={() => store.autoSum()} title="AutoSum (Alt+=)">Σ AutoSum</button>
-              <button onClick={() => store.clearSelection()} title="Clear contents (Delete)">Clear</button>
+              <button className="tool-btn" onClick={() => store.autoSum()} title="AutoSum (Alt+=)"><span className="sigma-icon">Σ</span>AutoSum</button>
+              <button className="tool-btn" onClick={() => store.clearSelection()} title="Clear contents (Delete)"><Icon name="eraser" />Clear</button>
             </Group>
           </>
         )}
@@ -107,17 +111,17 @@ export function SheetsRibbon({
           <>
             <Group label="Tables">
               <button className="big-btn" data-testid="open-pivot" onClick={onOpenPivot}>
-                <span className="big-icon">▦</span>PivotTable
+                <Icon name="table" size={20} />PivotTable
               </button>
             </Group>
             <Group label="Charts">
               <button className="big-btn" data-testid="open-chart" onClick={onOpenChart}>
-                <span className="big-icon">📊</span>Chart
+                <Icon name="chart" size={20} />Chart
               </button>
             </Group>
             <Group label="Cells">
-              <button onClick={() => store.insertRowAt(box.r1)}>Insert row</button>
-              <button onClick={() => store.insertColAt(box.c1)}>Insert col</button>
+              <button className="tool-btn" onClick={() => store.insertRowAt(box.r1)}><Icon name="insertRow" />Insert row</button>
+              <button className="tool-btn" onClick={() => store.insertColAt(box.c1)}><Icon name="insertColumn" />Insert column</button>
             </Group>
           </>
         )}
@@ -125,16 +129,16 @@ export function SheetsRibbon({
         {tab === 'data' && (
           <>
             <Group label="Sort & Filter">
-              <button onClick={() => store.sortSelection(true)} title="Sort ascending">A→Z</button>
-              <button onClick={() => store.sortSelection(false)} title="Sort descending">Z→A</button>
-              <button onClick={findReplace}>Find &amp; Replace</button>
+              <button className="tool-btn" onClick={() => store.sortSelection(true)} title="Sort ascending"><Icon name="sortAscending" />A to Z</button>
+              <button className="tool-btn" onClick={() => store.sortSelection(false)} title="Sort descending"><Icon name="sortDescending" />Z to A</button>
+              <button className="tool-btn" onClick={findReplace}><Icon name="search" />Find &amp; Replace</button>
             </Group>
             <Group label="Analysis">
               <button className="big-btn" onClick={onOpenPivot}>
-                <span className="big-icon">▦</span>PivotTable
+                <Icon name="table" size={20} />PivotTable
               </button>
               <button className="big-btn" onClick={onOpenChart}>
-                <span className="big-icon">📊</span>Chart
+                <Icon name="chart" size={20} />Chart
               </button>
             </Group>
           </>
@@ -143,13 +147,13 @@ export function SheetsRibbon({
         {tab === 'view' && (
           <>
             <Group label="Window">
-              <button onClick={() => store.toggleFreeze()} title="Freeze panes">Freeze</button>
+              <button className="tool-btn" onClick={() => store.toggleFreeze()} title="Freeze panes"><Icon name="freeze" />Freeze</button>
             </Group>
             <Group label="Automation">
-              <button data-testid="open-macro" onClick={onOpenMacro}>Macros</button>
+              <button className="tool-btn" data-testid="open-macro" onClick={onOpenMacro}><Icon name="code" />Macros</button>
             </Group>
             <Group label="Help">
-              <button data-testid="open-help" onClick={onOpenHelp}>Help</button>
+              <button className="tool-btn" data-testid="open-help" onClick={onOpenHelp}><Icon name="help" />Help</button>
             </Group>
           </>
         )}

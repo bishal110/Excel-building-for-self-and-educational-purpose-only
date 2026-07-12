@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { PivotAgg } from '../../engine/grid/pivot';
 import { store, selectionBox } from '../state/store';
+import { DialogFrame } from './DialogFrame';
 
 /** Build a pivot table from the currently selected range (first row = headers). */
 export function PivotBuilder({ onClose }: { onClose: () => void }) {
@@ -14,23 +15,17 @@ export function PivotBuilder({ onClose }: { onClose: () => void }) {
   const [agg, setAgg] = useState<PivotAgg>('sum');
 
   const build = () => {
-    const name = store.createPivotSheet({
+    store.createPivotSheet({
       rowField,
       colField: colField < 0 ? null : colField,
       valueField,
       agg,
     });
     onClose();
-    alert(`Created "${name}" from your selection.`);
   };
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <header>
-          <h2>PivotTable</h2>
-          <button onClick={onClose}>×</button>
-        </header>
+    <DialogFrame title="PivotTable" onClose={onClose}>
         {!enoughData ? (
           <p className="chart-empty">
             Select a data range that includes a header row and at least one data
@@ -102,7 +97,6 @@ export function PivotBuilder({ onClose }: { onClose: () => void }) {
             </div>
           </>
         )}
-      </div>
-    </div>
+    </DialogFrame>
   );
 }

@@ -1,14 +1,10 @@
 import { bindingsByCategory } from '../keybindings';
+import { DialogFrame } from './DialogFrame';
 
 export function HelpPanel({ onClose }: { onClose: () => void }) {
   const groups = bindingsByCategory();
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <header>
-          <h2>Keyboard shortcuts</h2>
-          <button onClick={onClose}>×</button>
-        </header>
+    <DialogFrame title="Keyboard shortcuts" onClose={onClose}>
         <p className="help-note">
           Every shortcut below is actually implemented. This list is generated
           from the app's keybinding table.
@@ -30,7 +26,6 @@ export function HelpPanel({ onClose }: { onClose: () => void }) {
             </div>
           ))}
         </div>
-      </div>
-    </div>
+    </DialogFrame>
   );
 }

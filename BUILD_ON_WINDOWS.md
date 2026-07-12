@@ -29,7 +29,7 @@ npm run dist:win-arm64
 The result lands in `release/`:
 
 ```
-release/AI_Office 0.2.0.exe        ← portable, single-file, double-click to run
+release/AI_Office 0.3.1.exe        ← portable, single-file, double-click to run
 ```
 
 For an **x64** machine (or to hand the app to colleagues on x64 platform PCs):
