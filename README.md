@@ -3,8 +3,8 @@
 </p>
 
 <p align="center">
-  <img alt="tests" src="https://img.shields.io/badge/unit_tests-326_passing-16a34a" />
-  <img alt="e2e" src="https://img.shields.io/badge/E2E-26_passing-16a34a" />
+  <img alt="tests" src="https://img.shields.io/badge/unit_tests-328_passing-16a34a" />
+  <img alt="e2e" src="https://img.shields.io/badge/E2E-27_passing-16a34a" />
   <img alt="typescript" src="https://img.shields.io/badge/TypeScript-strict-3178c6" />
   <img alt="bundle" src="https://img.shields.io/badge/offline_single_file-1.4_MB-2563eb" />
   <img alt="license" src="https://img.shields.io/badge/license-MIT-64748b" />
@@ -29,6 +29,7 @@ Every intentional limitation is written down in
 | 🦴 [**The Anatomy**](./docs/ANATOMY.md) | How a spreadsheet *actually* works inside — tokenizer → parser → evaluator, dependency graphs, virtualization — with diagrams, using this repo's real code |
 | ⚖️ [**vs Microsoft**](./docs/VS_MICROSOFT.md) | The honest ledger: what an advanced AI replicated in days, what Microsoft still does better, and *why* those moats exist |
 | 🔐 [**Security**](./docs/SECURITY.md) | The threat model of a local-first office app — what's mitigated, what's inherent, what's on the roadmap |
+| 🎨 [**UI/UX foundations**](./docs/UI_UX_FOUNDATIONS.md) | The design system, module accents, command patterns, accessibility contract, responsive rules, and honest next steps |
 | 🤖 [**AI Integration**](./docs/AI_INTEGRATION.md) | How a Copilot-style assistant would bolt onto this architecture (design exploration, with real API costs) |
 | 🐛 [**BUGLOG**](./BUGLOG.md) | Every one of the 13 bugs found across 7 phases — symptom, root cause, fix, guarding test |
 | 🗺️ [**Build plan**](./docs/PHASE0_PLAN.md) & [**Final audit**](./docs/PHASE7_REPORT.md) | How the project was planned, phased, and adversarially audited |
@@ -54,7 +55,7 @@ Every intentional limitation is written down in
 | **Documents** | Rich-text editor (TipTap) with a ribbon — styles/headings, font, bold/italic/underline, lists, alignment, insert table/image/link — a page-styled canvas, live word count, and Word-style **Save As: `.docx`, `.md`, `.html`, `.txt`** plus print-to-PDF. |
 | **Cloud (planned)** | Google Drive save/open is fully designed — least-privilege `drive.file` scope, no server of ours — see [`docs/GOOGLE_DRIVE.md`](./docs/GOOGLE_DRIVE.md); needs only a free OAuth Client ID to wire up. |
 | **Presentations** | Slide deck editor — title/body/image layouts, four themes, **drag-to-reorder** slide list, speaker notes, **full-screen present mode** with keyboard nav, and export the deck to PDF. |
-| **App shell** | A **File menu** (New / Open / Save As) plus contextual module tabs. In-app Help lists only shortcuts that actually work — a **build-time audit fails the build** if Help and the key handler diverge. Responsive down to 360px. |
+| **App shell** | An original, module-coloured desktop shell; consistent local SVG commands; contextual Sheets/Docs/Slides toolbars; a structured **File menu** (New / Open / Save As); shared accessible dialogs; and honest local-save status. In-app Help lists only shortcuts that actually work — a **build-time audit fails the build** if Help and the key handler diverge. Responsive down to 360px. |
 | **Persistence** | Autosaves the workbook, the document, and the slide deck to the browser (localStorage); one `.aioffice` file saves/opens all three modules together. |
 
 ---
@@ -99,11 +100,11 @@ npm run lint      # type-check with the TypeScript compiler
 npm run e2e       # end-to-end browser tests (Playwright)
 ```
 
-- **326 unit tests** cover the formula engine, grid operations, CSV/XLSX, the
+- **328 unit tests** cover the formula engine, grid operations, CSV/XLSX, the
   document model, the slide deck, the whole-suite project format, 10k-cell
   performance, and the app store (including a feature-by-feature audit, the
   Help↔keybinding audit, and stale-state edge cases).
-- **Playwright E2E (26 tests)** cover the Sheets flow (edit → formula → insert row →
+- **Playwright E2E (27 tests)** cover the Sheets flow (edit → formula → insert row →
   undo → export, freeze, macros, help), the Docs flow (type → format → insert
   table → export `.docx`), the Slides flow (create → reorder → present → exit),
   the File menu (save/new), a **keyboard-only accessibility** walkthrough, a

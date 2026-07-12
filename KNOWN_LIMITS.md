@@ -35,12 +35,9 @@ no feature parity is claimed. Items are moved here rather than silently dropped.
 
 - The in-process `runMacro` is **not a security sandbox** — it shadows common
   globals (`window`, `document`, `fetch`, `process`) but cannot fully isolate
-  untrusted code. True isolation (Web Worker, no DOM/network) is delivered by the
-  app shell in Phase 2. Do not run untrusted macros in the in-process runtime.
-
-## Not started yet (planned by phase)
-
-- Final adversarial audit & polish — Phase 7.
+  untrusted code. True isolation (Web Worker, no DOM/network, enforced timeout)
+  is not implemented yet. The UI labels macros experimental; do not run
+  untrusted macros in the in-process runtime.
 
 ## Sheets UI (Phase 2) — current limitations
 
