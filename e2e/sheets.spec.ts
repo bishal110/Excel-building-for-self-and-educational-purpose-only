@@ -68,6 +68,16 @@ test('edit → formula → insert row → undo → export', async ({ page }) => 
   expect(download.suggestedFilename()).toBe('sheet.csv');
 });
 
+test('Escape cancels a formula bar edit without changing the cell', async ({ page }) => {
+  await editCell(page, 'A1', 'original');
+  await page.locator('[data-cell="A1"]').click();
+  const formula = page.getByTestId('formula-input');
+  await formula.fill('should not be committed');
+  await formula.press('Escape');
+  await expect(page.locator('[data-cell="A1"]')).toHaveText('original');
+  await expect(formula).toHaveValue('original');
+});
+
 test('PivotTable summarizes a selection into a new sheet', async ({ page }) => {
   // Header row + data
   const rows = [

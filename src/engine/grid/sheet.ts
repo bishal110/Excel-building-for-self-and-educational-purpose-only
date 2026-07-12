@@ -54,7 +54,14 @@ export class Sheet {
   setRaw(col: number, row: number, raw: string): void {
     const key = cellKey(col, row);
     if (raw === '') this.cells.delete(key);
-    else this.cells.set(key, raw);
+    else {
+      this.cells.set(key, raw);
+      // Imported files and programmatic edits can extend beyond the initial
+      // viewport. Keep the logical dimensions in sync so those cells render
+      // and remain reachable instead of becoming invisible stored data.
+      this.colCount = Math.max(this.colCount, col + 1);
+      this.rowCount = Math.max(this.rowCount, row + 1);
+    }
     // Any edit invalidates cached values (simple, correct recalc).
     this.valueCache.clear();
   }

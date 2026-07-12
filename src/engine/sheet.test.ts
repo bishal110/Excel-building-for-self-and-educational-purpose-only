@@ -33,6 +33,13 @@ describe('Sheet literals', () => {
     expect(s.getA1('A1')).toBeNull();
     expect(s.hasCell(0, 0)).toBe(false);
   });
+  it('grows its dimensions when data is written beyond the initial grid', () => {
+    const s = new Sheet('Large import', 10, 5);
+    s.setRaw(59, 249, 'visible');
+    expect(s.colCount).toBe(60);
+    expect(s.rowCount).toBe(250);
+    expect(s.getRaw(59, 249)).toBe('visible');
+  });
 });
 
 describe('Sheet formulas', () => {

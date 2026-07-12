@@ -50,10 +50,9 @@ no feature parity is claimed. Items are moved here rather than silently dropped.
 - **`.xlsx` fidelity is limited.** Import/export via SheetJS carries cell values
   and formulas but **not** styles, number formats, merged cells, or charts. No
   round-trip formatting fidelity is claimed.
-- **`.xlsx` open/save are asymmetric on sheets.** Opening a workbook loads
-  **every** worksheet as its own tab, but **Save As → .xlsx writes only the
-  active sheet** (single-sheet export). Save the whole multi-sheet workbook as
-  an `.aioffice` project instead.
+- **Blank `.xlsx` worksheets are skipped on open.** Non-empty worksheets load
+  as individual tabs and Save As writes every current tab back to the workbook,
+  but a completely empty source worksheet is not recreated during import.
 - **Charts are minimal.** The chart builder renders a single line/bar series
   (inline SVG) from the first numeric column of the selection. No axes labels
   config, legends, multi-series, or export-as-image yet.

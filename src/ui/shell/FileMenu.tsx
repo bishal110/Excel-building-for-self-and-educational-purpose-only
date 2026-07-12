@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { exportSuite, importSuite, newSuite } from '../../io/suiteProject';
 import { parseCsv, toCsv } from '../../io/csv';
-import { readXlsxWorkbook, writeXlsx } from '../../io/xlsx';
+import { readXlsxWorkbook, writeXlsxWorkbook } from '../../io/xlsx';
 import { store } from '../state/store';
 import { downloadBlob, pickFile } from '../fileUtils';
 import { Icon } from '../components/Icon';
@@ -82,7 +82,7 @@ export function FileMenu({
   };
   const saveXlsx = () => {
     downloadBlob(
-      writeXlsx(store.exportRowsRaw()),
+      writeXlsxWorkbook(store.exportWorkbookRaw()),
       'workbook.xlsx',
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     );
