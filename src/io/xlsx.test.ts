@@ -48,4 +48,24 @@ describe('xlsx round-trip', () => {
     expect(sheets[0]!.rows[1]).toEqual(['Jan', '10']);
     expect(sheets[1]!.rows[1]).toEqual(['Feb', '=10*2']);
   });
+
+  it('writeXlsxWorkbook sanitizes illegal sheet names and de-duplicates', async () => {
+    const blob = writeXlsxWorkbook([
+      { name: 'bad/name:here', rows: [['a']] },
+      { name: 'bad name here', rows: [['b']] }, // collides after sanitizing
+      { name: '', rows: [['c']] },
+    ]);
+    const back = await readXlsxWorkbook(blob as unknown as File);
+    expect(back.map((s) => s.name)).toEqual(['bad name here', 'bad name here (2)', 'Sheet']);
+  });
+
+  it('writeXlsxWorkbook survives empty input and empty sheets', () => {
+    expect(writeXlsxWorkbook([])).toBeInstanceOf(Blob);
+    expect(writeXlsxWorkbook([{ name: 'Empty', rows: [] }])).toBeInstanceOf(Blob);
+  });
+
+  it('readXlsxWorkbook rejects malformed bytes instead of returning garbage', async () => {
+    const junk = new Blob([new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8])]);
+    await expect(readXlsxWorkbook(junk as unknown as File)).rejects.toThrow();
+  });
 });

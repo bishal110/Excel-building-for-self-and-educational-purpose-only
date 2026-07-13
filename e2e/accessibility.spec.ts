@@ -69,3 +69,29 @@ test('modals are keyboard-dismissable and buttons focusable', async ({ page }) =
   await page.keyboard.press('Enter');
   await expect(page.getByTestId('help-grid')).toBeHidden();
 });
+
+test('Escape closes a modal and focus returns to the opener', async ({ page }) => {
+  await page.getByTestId('ribbon-tab-view').click();
+  await page.getByTestId('open-help').focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByTestId('help-grid')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('help-grid')).toBeHidden();
+  // Focus restoration: the button that opened the dialog has focus again.
+  await expect(page.getByTestId('open-help')).toBeFocused();
+});
+
+test('ribbon tabs follow the ARIA tabs pattern (arrows, Home/End, aria-selected)', async ({ page }) => {
+  const home = page.getByTestId('ribbon-tab-home');
+  const insert = page.getByTestId('ribbon-tab-insert');
+  const view = page.getByTestId('ribbon-tab-view');
+  await expect(home).toHaveAttribute('aria-selected', 'true');
+  await home.focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(insert).toHaveAttribute('aria-selected', 'true');
+  await expect(insert).toBeFocused();
+  await page.keyboard.press('End');
+  await expect(view).toHaveAttribute('aria-selected', 'true');
+  await page.keyboard.press('Home');
+  await expect(home).toHaveAttribute('aria-selected', 'true');
+});

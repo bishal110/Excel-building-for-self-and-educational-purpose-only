@@ -4,6 +4,8 @@ import { PRESETS } from '../../engine/format/numberFormat';
 import { store, selectionBox } from '../state/store';
 import { useStoreVersion } from '../state/useStore';
 import { Icon } from './Icon';
+import { DialogFrame } from './DialogFrame';
+import { toast } from './dialogs';
 
 const FORMAT_OPTIONS: { key: string; label: string }[] = [
   { key: 'general', label: 'General' },
@@ -29,20 +31,32 @@ export function SheetsRibbon({
 }) {
   useStoreVersion();
   const [tab, setTab] = useState<Tab>('home');
+  const [showFindReplace, setShowFindReplace] = useState(false);
   const box = selectionBox(store.selection);
   const currentStyle = store.getStyle(box.c1, box.r1);
 
-  const findReplace = () => {
-    const find = prompt('Find what?');
-    if (find === null || find === '') return;
-    const replace = prompt('Replace with?') ?? '';
-    const n = store.findReplaceAll(find, replace);
-    alert(`Replaced in ${n} cell(s).`);
-  };
-
   return (
     <div className="ribbon" data-testid="sheets-ribbon">
-      <div className="ribbon-tabs" role="tablist">
+      <div
+        className="ribbon-tabs"
+        role="tablist"
+        aria-label="Ribbon tabs"
+        onKeyDown={(e) => {
+          // Arrow/Home/End navigation with roving tabindex (WAI-ARIA tabs).
+          const order: Tab[] = ['home', 'insert', 'data', 'view'];
+          const idx = order.indexOf(tab);
+          let next: Tab | null = null;
+          if (e.key === 'ArrowRight') next = order[(idx + 1) % order.length]!;
+          else if (e.key === 'ArrowLeft') next = order[(idx - 1 + order.length) % order.length]!;
+          else if (e.key === 'Home') next = order[0]!;
+          else if (e.key === 'End') next = order[order.length - 1]!;
+          if (next) {
+            e.preventDefault();
+            setTab(next);
+            (e.currentTarget.querySelector(`[data-testid="ribbon-tab-${next}"]`) as HTMLElement)?.focus();
+          }
+        }}
+      >
         {(['home', 'insert', 'data', 'view'] as Tab[]).map((t) => (
           <button
             key={t}
@@ -51,6 +65,7 @@ export function SheetsRibbon({
             className={'ribbon-tab' + (tab === t ? ' active' : '')}
             aria-selected={tab === t}
             aria-controls="sheets-ribbon-panel"
+            tabIndex={tab === t ? 0 : -1}
             onClick={() => setTab(t)}
           >
             {t[0]!.toUpperCase() + t.slice(1)}
@@ -131,7 +146,7 @@ export function SheetsRibbon({
             <Group label="Sort & Filter">
               <button className="tool-btn" onClick={() => store.sortSelection(true)} title="Sort ascending"><Icon name="sortAscending" />A to Z</button>
               <button className="tool-btn" onClick={() => store.sortSelection(false)} title="Sort descending"><Icon name="sortDescending" />Z to A</button>
-              <button className="tool-btn" onClick={findReplace}><Icon name="search" />Find &amp; Replace</button>
+              <button className="tool-btn" data-testid="open-find-replace" onClick={() => setShowFindReplace(true)}><Icon name="search" />Find &amp; Replace</button>
             </Group>
             <Group label="Analysis">
               <button className="big-btn" onClick={onOpenPivot}>
@@ -158,7 +173,44 @@ export function SheetsRibbon({
           </>
         )}
       </div>
+      {showFindReplace && <FindReplaceDialog onClose={() => setShowFindReplace(false)} />}
     </div>
+  );
+}
+
+function FindReplaceDialog({ onClose }: { onClose: () => void }) {
+  const [find, setFind] = useState('');
+  const [replace, setReplace] = useState('');
+  const run = () => {
+    if (find === '') return;
+    const n = store.findReplaceAll(find, replace);
+    onClose();
+    toast(`Replaced in ${n} cell(s).`, n > 0 ? 'success' : 'info');
+  };
+  return (
+    <DialogFrame title="Find & Replace" onClose={onClose} className="input-dialog">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          run();
+        }}
+      >
+        <label className="dialog-field">
+          <span>Find what</span>
+          <input data-testid="fr-find" value={find} autoFocus onChange={(e) => setFind(e.target.value)} />
+        </label>
+        <label className="dialog-field">
+          <span>Replace with</span>
+          <input data-testid="fr-replace" value={replace} onChange={(e) => setReplace(e.target.value)} />
+        </label>
+        <div className="dialog-actions">
+          <button type="button" onClick={onClose}>Cancel</button>
+          <button type="submit" className="btn-primary" data-testid="fr-run" disabled={find === ''}>
+            Replace all
+          </button>
+        </div>
+      </form>
+    </DialogFrame>
   );
 }
 

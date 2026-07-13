@@ -122,6 +122,20 @@ describe('AUDIT: edge cases (safety)', () => {
     expect(s.getValue(2, 1)).toBe(null); // no leftover 'f' from big.csv
   });
 
+  it('exportWorkbookRaw returns every sheet with names and raw formulas', () => {
+    const s = new Store();
+    s.commitCell(0, 0, '10');
+    s.commitCell(0, 1, '=A1*2');
+    s.addSheet(); // Sheet2, becomes active
+    s.commitCell(0, 0, 'second');
+    const all = s.exportWorkbookRaw();
+    expect(all.length).toBe(2);
+    expect(all[0]!.name).toBe('Sheet1');
+    expect(all[0]!.rows[1]![0]).toBe('=A1*2'); // formulas stay raw
+    expect(all[1]!.rows[0]![0]).toBe('second');
+    // The non-active sheet was NOT dropped — that was the old data-loss trap.
+  });
+
   it('sheetNameFromFile strips the extension and illegal characters', () => {
     expect(sheetNameFromFile('Q3 Report.xlsx')).toBe('Q3 Report');
     expect(sheetNameFromFile('a/b:c*d.csv')).toBe('a b c d');

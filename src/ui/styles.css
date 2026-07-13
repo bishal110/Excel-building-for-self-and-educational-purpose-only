@@ -891,3 +891,48 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   .slide-stage-header { font-size: 9px; }
   .slide-fields { padding: 13px; }
 }
+
+/* Shared dialog primitives (prompt/alert/confirm replacements) */
+.dialog-message { margin: 4px 0 12px; }
+.dialog-field { display: flex; flex-direction: column; gap: 4px; margin: 8px 0; }
+.dialog-field span { font-size: 12px; color: var(--muted); }
+.dialog-field input {
+  padding: 6px 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  font: inherit;
+}
+.dialog-error { color: var(--danger); font-size: 12px; margin: 4px 0; }
+.dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+.dialog-actions button {
+  padding: 6px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  background: var(--panel-strong);
+  cursor: pointer;
+  font: inherit;
+}
+.btn-primary { background: var(--accent) !important; color: var(--accent-contrast) !important; border-color: var(--accent) !important; }
+.btn-danger { background: var(--danger) !important; color: var(--accent-contrast) !important; border-color: var(--danger) !important; }
+
+/* Toasts */
+.toast-host {
+  position: fixed;
+  bottom: 40px;
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 100;
+}
+.toast {
+  padding: 10px 14px;
+  border-radius: 6px;
+  background: var(--text);
+  color: var(--accent-contrast);
+  font-size: 13px;
+  box-shadow: var(--shadow-md);
+  max-width: 340px;
+}
+.toast-success { background: #16794c; }
+.toast-error { background: var(--danger); }

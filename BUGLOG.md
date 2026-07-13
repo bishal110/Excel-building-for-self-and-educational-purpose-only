@@ -1,5 +1,7 @@
 # BUGLOG — AI_Office
 
+> Chronological log — test/function counts inside each entry reflect the repo *at that time*.
+
 Every bug found (by tests, lint, type-checker, or self-review) is logged here:
 symptom, root cause, fix, and the test that guards it.
 
@@ -394,3 +396,60 @@ screenshots at 360/768/1366 px (0 px horizontal overflow at all three).
   graph is static. Both documented in `KNOWN_LIMITS.md`.
 - **Test**: 31 unit tests (`functions.extended.test.ts`) + an E2E check that
   `TODAY`/`AVG`/`IFS`/`XLOOKUP`/`TEXTJOIN` work in the real grid.
+
+## P0 coherence pass (v0.4.0) — on top of the UI/UX foundation merge (PR #1)
+
+### BUG-020 — export could crash on user-renamed sheets; corrupt files opened as garbage
+- **Symptom (a)**: `writeXlsxWorkbook` truncated sheet names but did not strip
+  Excel-illegal characters (`: \ / ? * [ ]`) or de-duplicate — SheetJS's
+  `book_append_sheet` THROWS on both, so one oddly-named sheet failed the
+  whole export. **Fix**: `safeSheetName()` sanitizes + de-duplicates
+  (`report`, `report (2)`), and empty sheets export as one blank cell rather
+  than being dropped.
+- **Symptom (b)**: SheetJS "parses" arbitrary bytes as text, so a corrupt or
+  mislabeled workbook silently opened as one mojibake cell. **Fix**:
+  `readXlsxWorkbook` validates the container signature (ZIP magic for
+  `.xlsx`/`.xlsm`, CFB for `.xls`) and throws a clear message, surfaced by
+  File → Open as an error toast naming the file.
+- **Tests**: `io/xlsx.test.ts` — sanitize/de-dupe round-trip, empty-input
+  survival, malformed-bytes rejection; `edgecases.test.ts` — every sheet
+  present in `exportWorkbookRaw` with raw formulas.
+
+### BUG-022 — Docs "align left" not shown active on default paragraphs
+- **Symptom**: `alignmentActive('left')` checked only the explicit
+  `textAlign: 'left'` attribute; TipTap's default paragraphs carry no
+  textAlign at all, so freshly-typed text showed NO alignment as active.
+- **Fix**: left also counts when no other alignment is set. (The earlier
+  `as never` cast here was removed in PR #1; the remaining `as never` in the
+  Slides theme select is now a validated union check — zero `as never` /
+  `@ts-ignore` anywhere in src/.)
+
+### UX/A11y — native prompts/alerts/confirms fully replaced; menus keyboardable
+- New primitives on top of PR #1's `DialogFrame` (focus trap, Escape, focus
+  restoration): `ConfirmDialog`, `InputDialog` (inline validation), and an
+  `aria-live` `toast()` system. All 15 remaining `window.prompt/alert/confirm`
+  call sites replaced: Find & Replace (two-field dialog), sheet rename
+  (duplicate names rejected inline), sheet delete, New-project confirm,
+  file-open errors (toasts with reasons), Docs image/link (validated inline).
+- Ribbon tabs: roving tabindex + Arrow/Home/End keyboard navigation added to
+  PR #1's `aria-selected` markup. File menu: ArrowUp/Down/Home/End across
+  items, ArrowRight opens the Save As submenu (hover-only before), ArrowLeft
+  backs out, Escape closes and restores focus to the trigger.
+- Save As entries state their scope honestly: ".xlsx — all sheets",
+  ".csv — active sheet only".
+- **Tests**: E2E — File-menu keyboard walk, ribbon-tab arrows, Escape +
+  focus-restore on modals, dialog-driven rename/delete/find-replace/image/
+  link flows, and a byte-level multi-sheet export check.
+
+### DOCS — truth reconciliation + build-gated facts audit
+- Fixed on top of the merge: VS_MICROSOFT's stale "73 functions"/"259 tests"
+  and a new exact "144 functions" (moved to lower-bound wording), README's
+  hard-coded badge counts (de-numbered — they were already stale again),
+  KNOWN_LIMITS' leftover "for Phase 7" future reference.
+- **Policy**, enforced by `src/ui/facts.audit.test.ts` wired into
+  `npm run build`: exact counts live ONLY in README and must equal
+  code-derived values; every other doc uses verified "N+" lower bounds;
+  BUGLOG and PHASE7_REPORT are marked historical. The audit caught its first
+  real drift (the VS_MICROSOFT "144") during this very pass.
+- Added `docs/adr/ADR-001-sessions-and-persistence.md`: staged plan for
+  document sessions, schema-versioned envelopes, and IndexedDB persistence.

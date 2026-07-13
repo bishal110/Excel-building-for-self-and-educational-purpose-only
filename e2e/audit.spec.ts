@@ -94,6 +94,13 @@ test('AUDIT: every Sheets control runs without a runtime error', async ({ page }
   for (const [name, fn] of [
     ['Sort A-Z', () => tb.getByTitle('Sort ascending').click()],
     ['Sort Z-A', () => tb.getByTitle('Sort descending').click()],
+    ['Find & Replace', async () => {
+      await page.getByTestId('open-find-replace').click();
+      await page.getByTestId('fr-find').fill('alpha');
+      await page.getByTestId('fr-replace').fill('beta');
+      await page.getByTestId('fr-run').click();
+      await expect(page.getByTestId('toast-host')).toContainText('Replaced in');
+    }],
   ] as Array<[string, () => Promise<unknown>]>) {
     await fn();
     await page.waitForTimeout(20);
@@ -128,10 +135,15 @@ test('AUDIT: every Sheets control runs without a runtime error', async ({ page }
   await page.locator('.modal header button').click();
   expect(errors, `modals: ${errors.join(' | ')}`).toEqual([]);
 
-  // Sheet tabs: add, switch, rename (dialog), delete (confirm).
+  // Sheet tabs: add, switch, rename (in-app dialog), delete (in-app confirm).
   await page.locator('.sheet-add').click();
   await page.locator('.sheet-tab').first().click();
-  await page.locator('.sheet-tab').first().dblclick(); // rename via dialog
+  await page.locator('.sheet-tab').first().dblclick(); // opens rename dialog
+  await page.getByTestId('input-dialog-field').fill('Renamed');
+  await page.getByTestId('input-dialog-ok').click();
+  await expect(page.locator('.sheet-tab').first()).toContainText('Renamed');
+  await page.locator('.sheet-tab').last().locator('.sheet-close').click();
+  await page.getByTestId('confirm-ok').click();
   await page.waitForTimeout(30);
   expect(errors, `sheet tabs: ${errors.join(' | ')}`).toEqual([]);
 });
@@ -160,8 +172,17 @@ test('AUDIT: every Docs control runs without a runtime error', async ({ page }) 
     ['Align right', () => rb.getByTitle('Align right').click()],
     ['Align left', () => rb.getByTitle('Align left').click()],
     ['Insert table', () => page.getByTestId('insert-table').click()],
-    ['Insert image', () => rb.getByTitle('Insert image').click()],
-    ['Insert link', () => { return editor.click().then(() => rb.getByTitle('Insert link').click()); }],
+    ['Insert image', async () => {
+      await rb.getByTitle('Insert image').click();
+      await page.getByTestId('input-dialog-field').fill('https://example.com/img.png');
+      await page.getByTestId('input-dialog-ok').click();
+    }],
+    ['Insert link', async () => {
+      await editor.click();
+      await rb.getByTitle('Insert link').click();
+      await page.getByTestId('input-dialog-field').fill('https://example.com');
+      await page.getByTestId('input-dialog-ok').click();
+    }],
     ['Print', () => rb.getByText('Print / PDF').click()],
     ['Export docx', () => page.getByTestId('export-select').selectOption('docx')],
     ['Export md', () => page.getByTestId('export-select').selectOption('md')],

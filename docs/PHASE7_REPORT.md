@@ -1,5 +1,9 @@
 # Phase 7 — Final audit report
 
+> **Historical snapshot.** This report records the state at Phase 7
+> completion. Counts (tests, functions) have grown since — the README and
+> `BUGLOG.md` track the present.
+
 All seven phases of the AI_Office build plan are complete. This report records
 the final adversarial audit: what was tested, what broke, what was fixed, and
 exactly what the project ships.

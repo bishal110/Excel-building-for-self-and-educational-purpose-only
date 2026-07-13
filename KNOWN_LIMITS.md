@@ -141,4 +141,4 @@ no feature parity is claimed. Items are moved here rather than silently dropped.
   offline (inherent to PWAs).
 - **No code-splitting yet.** The bundle ships as one ~1.4 MB JS file (SheetJS,
   TipTap, and docx are all eager). Acceptable for LAN/offline use; splitting
-  remains an optimization candidate for Phase 7.
+  remains a future optimization candidate.

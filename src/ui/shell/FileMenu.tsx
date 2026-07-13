@@ -5,6 +5,7 @@ import { readXlsxWorkbook, writeXlsxWorkbook } from '../../io/xlsx';
 import { store } from '../state/store';
 import { downloadBlob, pickFile } from '../fileUtils';
 import { Icon } from '../components/Icon';
+import { ConfirmDialog, toast } from '../components/dialogs';
 
 type Module = 'sheets' | 'docs' | 'slides';
 
@@ -22,7 +23,9 @@ export function FileMenu({
 }) {
   const [open, setOpen] = useState(false);
   const [saveAsOpen, setSaveAsOpen] = useState(false);
+  const [confirmNew, setConfirmNew] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const onDoc = (e: MouseEvent) => {
@@ -35,16 +38,10 @@ export function FileMenu({
     return () => document.removeEventListener('mousedown', onDoc);
   }, []);
 
-  const close = () => {
+  const close = (returnFocus = false) => {
     setOpen(false);
     setSaveAsOpen(false);
-  };
-
-  const newProject = () => {
-    if (confirm('Start a new project? Unsaved changes in all modules will be cleared.')) {
-      newSuite();
-    }
-    close();
+    if (returnFocus) triggerRef.current?.focus();
   };
 
   const openFile = async () => {
@@ -59,20 +56,26 @@ export function FileMenu({
     try {
       if (ext === 'aioffice' || ext === 'json') {
         const ok = importSuite(JSON.parse(await file.text()));
-        if (!ok) alert('Not a valid AI_Office project file.');
+        if (!ok) return toast('Not a valid AI_Office project file.', 'error');
+        toast(`Opened project "${file.name}".`, 'success');
       } else if (ext === 'xlsx' || ext === 'xls' || ext === 'xlsm') {
         const sheets = await readXlsxWorkbook(file);
-        if (sheets.length === 0) return alert('That workbook appears to be empty.');
+        if (sheets.length === 0) return toast('That workbook appears to be empty.', 'error');
         onSwitchModule('sheets');
         store.openSheets(sheets); // every worksheet becomes a tab
+        toast(`Opened ${sheets.length} sheet(s) from "${file.name}".`, 'success');
       } else if (ext === 'csv' || ext === 'txt' || ext === 'tsv') {
         onSwitchModule('sheets');
         store.openRows(parseCsv(await file.text()), file.name);
+        toast(`Opened "${file.name}".`, 'success');
       } else {
-        alert(`Unsupported file type: .${ext}`);
+        toast(`Unsupported file type: .${ext}`, 'error');
       }
-    } catch {
-      alert(`Could not open "${file.name}".`);
+    } catch (e) {
+      toast(
+        `Could not open "${file.name}": ${e instanceof Error ? e.message : 'unknown error'}`,
+        'error',
+      );
     }
   };
 
@@ -95,22 +98,64 @@ export function FileMenu({
 
   const inSheets = module === 'sheets';
 
+  /** Roving focus among the menu items currently in the given container. */
+  const moveFocus = (container: HTMLElement, delta: 1 | -1 | 'first' | 'last') => {
+    const items = [...container.querySelectorAll<HTMLElement>('[role="menuitem"]:not([disabled])')];
+    if (items.length === 0) return;
+    if (delta === 'first') return items[0]!.focus();
+    if (delta === 'last') return items[items.length - 1]!.focus();
+    const idx = items.indexOf(document.activeElement as HTMLElement);
+    const next = items[(idx + delta + items.length) % items.length]!;
+    next.focus();
+  };
+
+  const onMenuKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const menu = e.currentTarget;
+    switch (e.key) {
+      case 'Escape':
+        e.preventDefault();
+        if (saveAsOpen) setSaveAsOpen(false);
+        else close(true);
+        return;
+      case 'ArrowDown':
+        e.preventDefault();
+        return moveFocus(menu, 1);
+      case 'ArrowUp':
+        e.preventDefault();
+        return moveFocus(menu, -1);
+      case 'Home':
+        e.preventDefault();
+        return moveFocus(menu, 'first');
+      case 'End':
+        e.preventDefault();
+        return moveFocus(menu, 'last');
+    }
+  };
+
   return (
     <div className="file-menu" ref={ref}>
       <button
+        ref={triggerRef}
         className="file-btn"
         data-testid="file-menu"
         aria-expanded={open}
         aria-haspopup="menu"
         onClick={() => setOpen((v) => !v)}
+        onKeyDown={(e) => {
+          if (e.key === 'ArrowDown' && open) {
+            e.preventDefault();
+            const menu = ref.current?.querySelector<HTMLElement>('.file-dropdown');
+            if (menu) moveFocus(menu, 'first');
+          }
+        }}
       >
         <Icon name="file" />
         <span>File</span>
         <Icon name="chevronDown" size={13} />
       </button>
       {open && (
-        <div className="file-dropdown" role="menu" aria-label="File actions">
-          <button role="menuitem" data-testid="file-new" onClick={newProject}>
+        <div className="file-dropdown" role="menu" aria-label="File actions" onKeyDown={onMenuKeyDown}>
+          <button role="menuitem" data-testid="file-new" onClick={() => { close(); setConfirmNew(true); }}>
             <span className="menu-item-icon"><Icon name="plus" /></span>
             <span className="menu-item-copy"><strong>New workspace</strong><small>Start with a clean local project</small></span>
           </button>
@@ -130,20 +175,53 @@ export function FileMenu({
               aria-expanded={saveAsOpen}
               aria-haspopup="menu"
               onClick={() => setSaveAsOpen((v) => !v)}
+              onKeyDown={(e) => {
+                if (e.key === 'ArrowRight' || e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setSaveAsOpen(true);
+                  requestAnimationFrame(() => {
+                    const sub = ref.current?.querySelector<HTMLElement>('.file-submenu');
+                    if (sub) moveFocus(sub, 'first');
+                  });
+                }
+              }}
             >
               <span className="menu-item-icon"><Icon name="download" /></span>
               <span className="menu-item-copy"><strong>Save as</strong><small>Choose a local file format</small></span>
               <Icon name="chevronRight" size={14} />
             </button>
             {saveAsOpen && (
-              <div className="file-submenu" role="menu" aria-label="Save formats">
+              <div
+                className="file-submenu"
+                role="menu"
+                aria-label="Save formats"
+                onKeyDown={(e) => {
+                  if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setSaveAsOpen(false);
+                    ref.current?.querySelector<HTMLElement>('[data-testid="file-saveas"]')?.focus();
+                  }
+                }}
+              >
                 <button role="menuitem" data-testid="save-project" onClick={saveProject}>AI Office project <span>.aioffice</span></button>
-                <button role="menuitem" data-testid="save-xlsx" disabled={!inSheets} onClick={saveXlsx}>Excel workbook <span>.xlsx</span></button>
-                <button role="menuitem" data-testid="save-csv" disabled={!inSheets} onClick={saveCsv}>Comma-separated values <span>.csv</span></button>
+                <button role="menuitem" data-testid="save-xlsx" disabled={!inSheets} onClick={saveXlsx}>Excel workbook — all sheets <span>.xlsx</span></button>
+                <button role="menuitem" data-testid="save-csv" disabled={!inSheets} onClick={saveCsv}>CSV — active sheet only <span>.csv</span></button>
               </div>
             )}
           </div>
         </div>
+      )}
+      {confirmNew && (
+        <ConfirmDialog
+          title="Start a new project"
+          message="Unsaved changes in Sheets, Docs, and Slides will all be cleared. Continue?"
+          confirmLabel="New project"
+          danger
+          onConfirm={() => newSuite()}
+          onClose={() => setConfirmNew(false)}
+        />
       )}
     </div>
   );

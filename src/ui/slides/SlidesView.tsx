@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { slidesStore, THEMES, type SlideLayout } from './slidesStore';
+import { slidesStore, THEMES, type SlideLayout, type Theme } from './slidesStore';
 import { useSlidesVersion } from './useSlides';
 import { SlideList } from './SlideList';
 import { SlideContent, themeClass } from './SlideThumb';
@@ -40,7 +40,10 @@ export function SlidesView() {
           <select
             data-testid="theme-select"
             value={theme}
-            onChange={(e) => slidesStore.setTheme(e.target.value as never)}
+            onChange={(e) => {
+              const v = e.target.value;
+              if ((THEMES as readonly string[]).includes(v)) slidesStore.setTheme(v as Theme);
+            }}
             title="Theme"
           >
             {THEMES.map((t) => (

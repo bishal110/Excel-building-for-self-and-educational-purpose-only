@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import type { Editor } from '@tiptap/react';
 import { sanitizeImageUrl, sanitizeLinkUrl } from '../security';
 import { Icon } from '../components/Icon';
+import { InputDialog } from '../components/dialogs';
 
 const FONTS = ['Default', 'Arial', 'Georgia', 'Times New Roman', 'Courier New'];
 
@@ -17,8 +19,22 @@ export function DocRibbon({
 }) {
   const active = (name: string, attrs?: Record<string, unknown>) =>
     editor.isActive(name, attrs) ? ' active' : '';
-  const alignmentActive = (align: 'left' | 'center' | 'right') =>
-    editor.isActive({ textAlign: align }) ? ' active' : '';
+  const [dialog, setDialog] = useState<'image' | 'link' | null>(null);
+
+  /** Alignment pressed-state. Default paragraphs carry no textAlign
+   *  attribute, so "left" also counts when nothing else is set. */
+  const alignmentActive = (align: 'left' | 'center' | 'right') => {
+    if (editor.isActive({ textAlign: align })) return ' active';
+    if (
+      align === 'left' &&
+      !editor.isActive({ textAlign: 'center' }) &&
+      !editor.isActive({ textAlign: 'right' }) &&
+      !editor.isActive({ textAlign: 'justify' })
+    ) {
+      return ' active';
+    }
+    return '';
+  };
 
   const styleValue = editor.isActive('heading', { level: 1 })
     ? 'h1'
@@ -88,29 +104,14 @@ export function DocRibbon({
         </button>
         <button
           className="tool-btn"
-          onClick={() => {
-            const url = prompt('Image URL');
-            if (!url) return;
-            const safe = sanitizeImageUrl(url);
-            if (safe) editor.chain().focus().setImage({ src: safe }).run();
-            else alert('Only http(s) or data:image URLs are allowed.');
-          }}
+          onClick={() => setDialog('image')}
           title="Insert image"
         >
           <Icon name="image" />Image
         </button>
         <button
           className="tool-btn"
-          onClick={() => {
-            const url = prompt('Link URL');
-            if (!url) {
-              editor.chain().focus().unsetLink().run();
-              return;
-            }
-            const safe = sanitizeLinkUrl(url);
-            if (safe) editor.chain().focus().setLink({ href: safe }).run();
-            else alert('Only http(s) or mailto links are allowed.');
-          }}
+          onClick={() => setDialog('link')}
           title="Insert link"
         >
           <Icon name="link" />Link
@@ -138,6 +139,41 @@ export function DocRibbon({
         </select>
         <button className="tool-btn" onClick={onPrint}><Icon name="print" />Print / PDF</button>
       </div>
+
+      {dialog === 'image' && (
+        <InputDialog
+          title="Insert image"
+          label="Image URL"
+          placeholder="https://… or data:image/…"
+          submitLabel="Insert"
+          validate={(v) => (sanitizeImageUrl(v) ? null : 'Only http(s) or data:image URLs are allowed.')}
+          onSubmit={(v) => {
+            const safe = sanitizeImageUrl(v);
+            if (safe) editor.chain().focus().setImage({ src: safe }).run();
+          }}
+          onClose={() => setDialog(null)}
+        />
+      )}
+      {dialog === 'link' && (
+        <InputDialog
+          title="Insert link"
+          label="Link URL (leave empty to remove the link)"
+          placeholder="https://… or mailto:…"
+          submitLabel="Apply"
+          validate={(v) =>
+            v === '' || sanitizeLinkUrl(v) ? null : 'Only http(s) or mailto links are allowed.'
+          }
+          onSubmit={(v) => {
+            if (v === '') {
+              editor.chain().focus().unsetLink().run();
+              return;
+            }
+            const safe = sanitizeLinkUrl(v);
+            if (safe) editor.chain().focus().setLink({ href: safe }).run();
+          }}
+          onClose={() => setDialog(null)}
+        />
+      )}
     </div>
   );
 }

@@ -96,7 +96,6 @@ test('PivotTable summarizes a selection into a new sheet', async ({ page }) => {
 
   // Insert tab → PivotTable
   await page.getByTestId('ribbon-tab-insert').click();
-  page.on('dialog', (d) => d.accept());
   await page.getByTestId('open-pivot').click();
   await page.getByTestId('pivot-row').selectOption('0'); // Well
   await page.getByTestId('pivot-value').selectOption('2'); // Prod

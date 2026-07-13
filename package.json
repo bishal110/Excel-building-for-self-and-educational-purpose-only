@@ -1,7 +1,7 @@
 {
   "name": "ai-office",
   "private": true,
-  "version": "0.3.1",
+  "version": "0.4.0",
   "type": "module",
   "description": "AI_Office — an offline-first spreadsheet suite (built for self-learning and educational purposes).",
   "license": "MIT",
@@ -9,7 +9,7 @@
   "main": "electron/main.cjs",
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
-    "audit:help": "vitest run src/ui/keybindings.audit.test.ts",
+    "audit:help": "vitest run src/ui/keybindings.audit.test.ts src/ui/facts.audit.test.ts",
     "build": "tsc --noEmit && npm run audit:help && vite build",
     "build:single": "vite build --config vite.singlefile.config.ts && node scripts/finish-singlefile.mjs",
     "preview": "vite preview --port=4173 --host=0.0.0.0",

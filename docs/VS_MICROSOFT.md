@@ -1,6 +1,6 @@
 # ⚖️ AI_Office vs Microsoft Office — the honest ledger
 
-> One person + one AI (Claude Fable 5) built this in days. Microsoft has built
+> One person + one AI assistant (Claude) built this in days. Microsoft has built
 > Office since 1985 with thousands of engineers. This document is the honest
 > accounting of that gap: what an advanced AI **could** replicate quickly, what
 > it **couldn't**, and what would take *years regardless of how smart the AI
@@ -11,8 +11,8 @@
 
 | Capability | Microsoft Office | AI_Office | Verdict |
 |---|---|---|---|
-| Formula engine core (parse/evaluate/errors) | ✅ | ✅ 144 functions, Excel-style semantics | **Replicated in part** — the educational skeleton is genuinely here |
-| Function library breadth | ~500 functions | 73 | **Partial** — the *long tail* (statistical, financial, engineering) is sheer volume, addable over time |
+| Formula engine core (parse/evaluate/errors) | ✅ | ✅ 140+ functions, Excel-style semantics | **Replicated in part** — the educational skeleton is genuinely here |
+| Function library breadth | ~500 functions | 140+ | **Partial** — the *long tail* (statistical, financial, engineering) is sheer volume, addable over time |
 | Recalculation at scale | Millions of cells, multithreaded native code | 10k cells fast; single-threaded JS | **Partial** — architecture is right (dependency-ordered), raw horsepower isn't |
 | Grid UX (edit, undo, freeze, formats, sort) | ✅ | ✅ | **Replicated** at core level |
 | Charts | Dozens of types, styling engine | Line/bar | **Skeleton only** |
@@ -31,7 +31,7 @@ Excel's exact precedence quirks, dependency-graph recalculation with cycle
 detection, reference rewriting on structural edits, a virtualized grid, an
 iterative evaluator that survives 1,000-deep formula chains. These are
 *well-defined problems*, and modern AI is extremely strong on well-defined
-problems — including writing the 259 tests that police them.
+problems — including writing the 300+ unit tests that police them.
 
 ## What Microsoft still does better — and *why* AI can't shortcut it
 
@@ -76,7 +76,7 @@ floor by floor — keep building. That was the goal; parity never was.
 
 ```mermaid
 flowchart TD
-    F0["Floor 0 — Formula & grid engine · 259 tests · DONE"] --> F1
+    F0["Floor 0 — Formula & grid engine · 300+ tests · DONE"] --> F1
     F1["Floor 1 — Sheets / Docs / Slides UIs · DONE"] --> F2
     F2["Floor 2 — Shell, packaging, PWA, audits · DONE"] --> F3
     F3["Floors 3–10 — long-tail features, fidelity, perf<br/>(buildable by anyone, mapped in KNOWN_LIMITS)"] -.-> FN

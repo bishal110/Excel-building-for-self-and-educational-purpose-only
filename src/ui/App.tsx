@@ -4,6 +4,7 @@ import { DocsView } from './docs/DocsView';
 import { SlidesView } from './slides/SlidesView';
 import { FileMenu } from './shell/FileMenu';
 import { Icon } from './components/Icon';
+import { Toasts } from './components/dialogs';
 
 type Module = 'sheets' | 'docs' | 'slides';
 
@@ -61,6 +62,7 @@ export function App() {
       {module === 'sheets' && <SheetsWorkspace />}
       {module === 'docs' && <DocsView />}
       {module === 'slides' && <SlidesView />}
+      <Toasts />
     </div>
   );
 }

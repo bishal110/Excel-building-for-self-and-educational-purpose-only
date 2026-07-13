@@ -3,8 +3,8 @@
 </p>
 
 <p align="center">
-  <img alt="tests" src="https://img.shields.io/badge/unit_tests-328_passing-16a34a" />
-  <img alt="e2e" src="https://img.shields.io/badge/E2E-27_passing-16a34a" />
+  <img alt="tests" src="https://img.shields.io/badge/unit_tests-passing-16a34a" />
+  <img alt="e2e" src="https://img.shields.io/badge/E2E-passing-16a34a" />
   <img alt="typescript" src="https://img.shields.io/badge/TypeScript-strict-3178c6" />
   <img alt="bundle" src="https://img.shields.io/badge/offline_single_file-1.4_MB-2563eb" />
   <img alt="license" src="https://img.shields.io/badge/license-MIT-64748b" />
@@ -31,7 +31,7 @@ Every intentional limitation is written down in
 | 🔐 [**Security**](./docs/SECURITY.md) | The threat model of a local-first office app — what's mitigated, what's inherent, what's on the roadmap |
 | 🎨 [**UI/UX foundations**](./docs/UI_UX_FOUNDATIONS.md) | The design system, module accents, command patterns, accessibility contract, responsive rules, and honest next steps |
 | 🤖 [**AI Integration**](./docs/AI_INTEGRATION.md) | How a Copilot-style assistant would bolt onto this architecture (design exploration, with real API costs) |
-| 🐛 [**BUGLOG**](./BUGLOG.md) | Every one of the 13 bugs found across 7 phases — symptom, root cause, fix, guarding test |
+| 🐛 [**BUGLOG**](./BUGLOG.md) | Every bug found, from Phase 1 to today — symptom, root cause, fix, guarding test |
 | 🗺️ [**Build plan**](./docs/PHASE0_PLAN.md) & [**Final audit**](./docs/PHASE7_REPORT.md) | How the project was planned, phased, and adversarially audited |
 
 ---
@@ -100,11 +100,11 @@ npm run lint      # type-check with the TypeScript compiler
 npm run e2e       # end-to-end browser tests (Playwright)
 ```
 
-- **328 unit tests** cover the formula engine, grid operations, CSV/XLSX, the
+- **An extensive unit suite (300+ tests)** covers the formula engine, grid operations, CSV/XLSX, the
   document model, the slide deck, the whole-suite project format, 10k-cell
   performance, and the app store (including a feature-by-feature audit, the
   Help↔keybinding audit, and stale-state edge cases).
-- **Playwright E2E (27 tests)** cover the Sheets flow (edit → formula → insert row →
+- **Playwright E2E tests (25+)** cover the Sheets flow (edit → formula → insert row →
   undo → export, freeze, macros, help), the Docs flow (type → format → insert
   table → export `.docx`), the Slides flow (create → reorder → present → exit),
   the File menu (save/new), a **keyboard-only accessibility** walkthrough, a
