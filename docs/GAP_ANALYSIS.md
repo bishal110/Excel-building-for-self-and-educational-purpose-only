@@ -86,5 +86,62 @@ new functions land discoverable rather than buried.
 
 ---
 
-*Next week's rotation slot: PivotTables (source-bound model vs our snapshot
-builder).*
+## Week of 2026-07-20 — PivotTables
+
+### What Microsoft ships
+
+Excel's pivot architecture (per the Learn object model and JS API docs) has
+three layers and a rich field system:
+
+1. **Source → PivotCache → report.** The cache is an intermediate snapshot of
+   the source data; *Refresh* re-reads the source into the cache and the
+   report recomputes from it. Several PivotTables can share one cache. The
+   report remembers its `SourceData` and `RefreshDate`.
+2. **Four hierarchy areas**: Filters (page), Columns, Rows, Values. Any
+   number of fields per area; row/column fields nest (subtotals per level);
+   a value field can appear multiple times with different aggregations.
+3. **Field machinery**: per-field sorting, label/date/value/manual filter
+   types, slicers (UI filter controls on the drawing layer), calculated
+   fields/items, drill-down/up, grand-total toggles per axis, layout modes
+   (compact/outline/tabular), style galleries, writeback for OLAP sources.
+
+Real-world pain Microsoft's own Q&A confirms: stale pivots when the source
+moved or a filter hides new data — i.e. even Excel's refresh model confuses
+users when source identity is implicit. A lesson worth designing around.
+
+### What AI_Office has
+
+A one-shot **snapshot** builder: select a range → choose one row field, an
+optional column field, one value field, one of five aggregations → a new
+static sheet with grand totals. Honest and tested, but: no source binding
+(edit the data and the pivot is silently stale), no refresh, no multi-value,
+no nesting, no filters.
+
+### Verdict
+
+**Closable in stages — this is engineering, not moat** (except OLAP/writeback
+and slicer-style linked visuals, which ride on infrastructure we don't have
+and don't need). Staged design:
+
+- **Stage 1 — source-bound + Refresh (next closable step).** Persist a
+  `PivotDefinition` alongside the output sheet:
+  `{ sourceSheet, sourceRange, rows: [i], cols: [i], values: [{field, agg}], createdAt }`.
+  The pivot sheet gets a "Refresh" affordance that re-runs `pivotGrid`
+  against the *live* source range and rewrites the sheet, plus a visible
+  "source: Sheet1!A1:C40 · refreshed <time>" caption — making staleness
+  explicit instead of silent (learning from Excel's own UX pain). Source
+  sheet renamed → definition follows; deleted → the pivot sheet shows a
+  clear broken-source notice, never wrong numbers. ~1 store method, dialog
+  reuse, unit + E2E tests.
+- **Stage 2 — multiple values + nested rows.** Generalize `pivotGrid` to
+  `rows: number[]` (tree flatten with per-level subtotal rows) and
+  `values: {field, agg}[]` (column group per value). Pure-engine work with
+  table-driven tests.
+- **Stage 3 — filters area + a drag-drop field arranger** in the dialog
+  (four labeled drop zones), only after Stage 2's model is stable.
+- **Out of scope by design**: OLAP cubes, writeback, slicers-as-objects —
+  institutional-moat infrastructure per `docs/VS_MICROSOFT.md`.
+
+---
+
+*Next week's rotation slot: conditional formatting.*
